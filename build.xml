@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="MediaFlow" default="distslave" basedir=".">
+	<!-- base properties -->
+	<property name="src" location="src"/>
+	<property name="bin" location="bin"/>
+	<property name="lib" location="lib"/>
+	<property name="build" location="build"/>
+	<property name="dist" location="dist"/>
+	<property name="properties" location="properties"/>
+	<property name="resource" location="resource"/>
+	<property name="javadoc.destdir" location="javadoc"/>
+	<property name="jarfile" location="${dist}/${ant.project.name}.jar"/>
+	<property name="compile.debug" value="true"/>
+	
+	<property name="tests.src" value="tests/source" />
+	<property name="tests.srcstub" value="tests/stubsource" />
+	<property name="tests.build" value="tests/build" />
+	<property name="tests.stubbuild" value="tests/buildstub" />
+	<property name="tests.reports" value="tests/reports" />
+	<property name="testjarfile" value="tests/${ant.project.name}Tests.jar" />
+	
+	<property name="slavejarname" location="MediaFlowSlave.jar"/>
+	<property name="masterwarname" location="music.war"/>
+	<property name="mastercontextname" location="WEB-INF/context.xml"/>
+	<property name="webxmlfile" location="WEB-INF/web.xml"/>
+	<property name="mainslaveclass" value="house.neko.util.Bootstrap"/>
+	
+	<!-- external stuff -->
+
+    <fileset id="lib.jars" dir="${lib}">
+        <include name="**/*.jar"/>
+    </fileset>
+
+    <path id="lib.path">
+        <fileset refid="lib.jars"/>
+    </path>
+
+	<target name="init">
+		<mkdir dir="${build}"/>
+		<mkdir dir="${dist}"/>
+		<mkdir dir="${tests.build}" />
+		<mkdir dir="${tests.srcstub}" />
+		<mkdir dir="${tests.stubbuild}" />
+		<mkdir dir="${tests.reports}" />
+		<mkdir dir="${javadoc.destdir}"/>
+		<property environment="env"/>
+		<condition property="hostname" value="${env.HOSTNAME}">
+			<os family="unix"/>
+		</condition>
+		<condition property="hostname" value="${env.COMPUTERNAME}">
+			<os family="windows"/>
+			<!-- perhaps i stricter test is necessary, not sure it works on older windows systems. -->
+		</condition>
+		<!-- what to do on Mac or other operation systems??? -->
+		<echo message="host = ${hostname}"/>
+	</target>
+
+	<!-- Build -->
+	<target name="compile" description="Compile code" depends="init">
+		<mkdir dir="${bin}"/>
+		<mkdir dir="${build}"/>
+		<javac srcdir="${src}" destdir="${build}"
+				source="1.6" target="1.6"
+				includeAntRuntime="no"
+				classpathref="lib.path" debug="${compile.debug}">
+			<compilerarg value="-Xlint"/>
+		</javac>
+	</target>
+
+	  <!-- This is similar to above.  We use this to compile the tests. -->
+	<target name="compiletests" depends="compile" description="Builds the test code.">
+		<javac
+			srcdir="${tests.srcstub}"
+			destdir="${tests.stubbuild}"
+			debug="true">
+			<classpath>
+				<pathelement location="${build}" />
+				<fileset dir="lib">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+		<javac
+			srcdir="${tests.src}"
+			destdir="${tests.build}"
+			debug="true">
+			<classpath>
+				<pathelement location="${build}" />
+				<pathelement location="${tests.stubbuild}" />
+				<fileset dir="lib">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<!-- Packaging -->
+	<target name="testjar" depends="compiletests" description="generate the test jar file" >
+		<jar jarfile="${testjarfile}">
+			<fileset dir="${tests.build}">
+				<include name="**"/>
+			</fileset>
+			<fileset dir="${tests.stubbuild}">
+				<include name="**"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="test" depends="testjar,distslave,distmaster">
+		<junit 
+			printsummary="withOutAndErr" 
+			showoutput="false"
+			fork="true">
+			<classpath>
+				<pathelement location="${testjarfile}"/>
+				<pathelement location="${masterwarname}"/>
+				<pathelement location="${slavejarname}"/>
+				<path refid="lib.path"/>
+			</classpath>
+			<formatter type="xml" />
+			<batchtest todir="${tests.reports}">
+				<fileset dir="${tests.src}">
+					<include name="**/*Test.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+
+	<!-- Packaging -->
+	<target name="distmaster" depends="compile" description="generate the master war file" >
+		<war
+		  destfile="${masterwarname}"
+		  webxml="${webxmlfile}">
+			<classes dir="${build}">
+				<include name="house/neko/media/common/**"/>
+				<include name="house/neko/media/master/**"/>
+				<include name="house/neko/media/itunes/**"/>
+				<include name="net/**"/>
+				<include name="org/**"/>
+			</classes>
+			<fileset dir=".">
+				<include name="WEB-INF/**"/>
+			</fileset>
+			<fileset dir=".">
+				<include name="META-INF/**"/>
+			</fileset>
+		</war>
+	</target>
+	
+	<target name="distslave" depends="compile" description="generate the slave jar file" >
+		<manifest file="slave_MANIFEST.MF">
+			<attribute name="Main-Class" value="${mainslaveclass}"/>
+			<attribute name="Built-By" value="${user.name}"/>
+			<section name="${mainslaveclass}">
+				<attribute name="Sealed" value="false"/>
+			</section>
+		</manifest>
+		<jar
+		  jarfile="${slavejarname}"
+		  manifest="slave_MANIFEST.MF">
+			<fileset dir="${build}">
+				<include name="house/neko/media/common/**"/>
+				<include name="house/neko/media/slave/**"/>
+				<include name="house/neko/media/itunes/**"/>
+				<include name="house/neko/media/device/**"/>
+				<include name="house/neko/util/**"/>
+			</fileset>
+			<fileset dir="${properties}">
+				<include name="**"/>
+			</fileset>
+            <fileset dir="${resource}">
+                    <include name="**"/>
+            </fileset>
+			 <!-- <zipgroupfileset refid="lib.jars"/> -->
+		</jar>
+	</target>
+
+	<target name="runtest"><java fork="true" jar="${slavejarname}" /></target>
+
+	<!-- Run -->
+	<target name="runslave" depends="distslave">
+		<java fork="true" classname="${mainslaveclass}">
+			<arg line="-Djava.util.logging.config.file=${properties}/logger.properties"/>
+			<classpath>
+				<pathelement location="${slavejarname}"/>
+				<path refid="lib.path"/>
+			</classpath>
+		</java>
+	</target>
+
+	<target name="echo">
+	<property environment="env"/>
+		<echo message="env.CATALINA_HOME: ${env.CATALINA_HOME}" />
+	</target>
+
+
+	<!-- Deploy -->
+	<target name="sendmaster" depends="distmaster">
+		<exec executable="sftp" inputstring="put ${masterwarname}">
+			<arg line="andy@tomogara:Code/apache-tomcat-6.0.18/webapps/"/>
+		</exec>
+	</target>
+	<target name="putmaster" depends="distmaster">
+		<copy file="${masterwarname}" todir="/Users/andy/Code/apache-tomcat-6.0.18/webapps"/>
+	</target>
+	
+	
+	<!-- Docs -->
+	<target name="javadoc">
+		<mkdir dir="${javadoc.destdir}"/>
+		<javadoc sourcepath="${src}" destdir="${javadoc.destdir}" source="1.5"/>
+	</target>
+	
+	<target name="clean" description="Remove build and dist directories">
+		<delete dir="${build}"/>
+		<delete dir="${dist}"/>
+		<delete dir="${javadoc.destdir}"/>
+	</target>
+</project>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="0" failures="0" hostname="Tomogara.local" name="house.neko.media.itunes.ITunesMediaLibraryXMLFileTest" tests="2" time="0.287" timestamp="2009-08-02T23:08:52">
+  <properties>
+    <property name="java.vendor" value="Apple Inc." />
+    <property name="jarfile" value="/Users/andy/Code/MediaFlow/dist/MediaFlow.jar" />
+    <property name="sun.java.launcher" value="SUN_STANDARD" />
+    <property name="jikes.class.path" value=":/System/Library/Frameworks/JavaVM.framework/Home/../Classes/charsets.jar:/System/Library/Frameworks/JavaVM.framework/Home/../Classes/classes.jar:/System/Library/Frameworks/JavaVM.framework/Home/../Classes/dt.jar:/System/Library/Frameworks/JavaVM.framework/Home/../Classes/jce.jar:/System/Library/Frameworks/JavaVM.framework/Home/../Classes/jconsole.jar:/System/Library/Frameworks/JavaVM.framework/Home/../Classes/jsse.jar:/System/Library/Frameworks/JavaVM.framework/Home/../Classes/laf.jar:/System/Library/Frameworks/JavaVM.framework/Home/../Classes/ui.jar" />
+    <property name="sun.management.compiler" value="HotSpot Client Compiler" />
+    <property name="env.SECURITYSESSIONID" value="6a3f20" />
+    <property name="dist" value="/Users/andy/Code/MediaFlow/dist" />
+    <property name="lib" value="/Users/andy/Code/MediaFlow/lib" />
+    <property name="os.name" value="Mac OS X" />
+    <property name="sun.boot.class.path" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/jsfd.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/classes.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/ui.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/laf.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/sunrsasign.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/jsse.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/jce.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/charsets.jar" />
+    <property name="env.TMPDIR" value="/var/folders/AL/ALK0zV-EGcuVQ30RhhUBlU+++TI/-Tmp-/" />
+    <property name="env.PWD" value="/Users/andy/Code/MediaFlow" />
+    <property name="tests.stubbuild" value="tests/buildstub" />
+    <property name="env.LANG" value="en_US.UTF-8" />
+    <property name="java.vm.specification.vendor" value="Sun Microsystems Inc." />
+    <property name="ant.home" value="/usr/share/ant" />
+    <property name="java.runtime.version" value="1.5.0_19-b02-304" />
+    <property name="resource" value="/Users/andy/Code/MediaFlow/resource" />
+    <property name="env.JAVA_MAIN_CLASS_62345" value="org.apache.tools.ant.launch.Launcher" />
+    <property name="tests.build" value="tests/build" />
+    <property name="env.Apple_PubSub_Socket_Render" value="/tmp/launch-vY2NRK/Render" />
+    <property name="env.DISPLAY" value="/tmp/launch-RcA13k/:0" />
+    <property name="user.name" value="andy" />
+    <property name="env.USER" value="andy" />
+    <property name="env.SHELL" value="/bin/bash" />
+    <property name="env.__CF_USER_TEXT_ENCODING" value="0x1F5:0:0" />
+    <property name="awt.nativeDoubleBuffering" value="true" />
+    <property name="slavejarname" value="/Users/andy/Code/MediaFlow/MediaFlowSlave.jar" />
+    <property name="env.PATH" value="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/opt/local/bin:/opt/local/sbin:/Users/andy/bin" />
+    <property name="user.language" value="en" />
+    <property name="build" value="/Users/andy/Code/MediaFlow/build" />
+    <property name="sun.boot.library.path" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Libraries" />
+    <property name="testjarfile" value="tests/MediaFlowTests.jar" />
+    <property name="ant.project.name" value="MediaFlow" />
+    <property name="java.version" value="1.5.0_19" />
+    <property name="user.timezone" value="" />
+    <property name="bin" value="/Users/andy/Code/MediaFlow/bin" />
+    <property name="sun.arch.data.model" value="32" />
+    <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16" />
+    <property name="java.endorsed.dirs" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home/lib/endorsed" />
+    <property name="sun.cpu.isalist" value="" />
+    <property name="sun.jnu.encoding" value="MacRoman" />
+    <property name="file.encoding.pkg" value="sun.io" />
+    <property name="env.SHLVL" value="1" />
+    <property name="file.separator" value="/" />
+    <property name="java.specification.name" value="Java Platform API Specification" />
+    <property name="java.class.version" value="49.0" />
+    <property name="src" value="/Users/andy/Code/MediaFlow/src" />
+    <property name="user.country" value="US" />
+    <property name="java.home" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home" />
+    <property name="java.vm.info" value="mixed mode, sharing" />
+    <property name="env.LOGNAME" value="andy" />
+    <property name="ant.file" value="/Users/andy/Code/MediaFlow/build.xml" />
+    <property name="os.version" value="10.5.7" />
+    <property name="env.TERM_PROGRAM_VERSION" value="240.2" />
+    <property name="tests.reports" value="tests/reports" />
+    <property name="path.separator" value=":" />
+    <property name="hostname" value="${env.HOSTNAME}" />
+    <property name="java.vm.version" value="1.5.0_19-137" />
+    <property name="javadoc.destdir" value="/Users/andy/Code/MediaFlow/javadoc" />
+    <property name="ant.library.dir" value="/usr/share/ant/lib" />
+    <property name="properties" value="/Users/andy/Code/MediaFlow/properties" />
+    <property name="ant.file.MediaFlow" value="/Users/andy/Code/MediaFlow/build.xml" />
+    <property name="java.awt.printerjob" value="apple.awt.CPrinterJob" />
+    <property name="env.TERM" value="xterm-color" />
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle" />
+    <property name="awt.toolkit" value="apple.awt.CToolkit" />
+    <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16" />
+    <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16" />
+    <property name="env.MANPATH" value="/opt/local/share/man:/usr/share/man:/usr/local/share/man:/usr/X11/man" />
+    <property name="masterwarname" value="/Users/andy/Code/MediaFlow/music.war" />
+    <property name="user.home" value="/Users/andy" />
+    <property name="webxmlfile" value="/Users/andy/Code/MediaFlow/WEB-INF/web.xml" />
+    <property name="java.specification.vendor" value="Sun Microsystems Inc." />
+    <property name="env.TERM_PROGRAM" value="Apple_Terminal" />
+    <property name="java.vendor.url" value="http://www.apple.com/" />
+    <property name="java.library.path" value=".:/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java" />
+    <property name="gopherProxySet" value="false" />
+    <property name="java.vm.vendor" value="Apple Inc." />
+    <property name="java.runtime.name" value="Java(TM) 2 Runtime Environment, Standard Edition" />
+    <property name="ant.version" value="Apache Ant version 1.7.0 compiled on May 21 2009" />
+    <property name="java.class.path" value="/Users/andy/Code/MediaFlow/tests/MediaFlowTests.jar:/Users/andy/Code/MediaFlow/music.war:/Users/andy/Code/MediaFlow/MediaFlowSlave.jar:/Users/andy/Code/MediaFlow/lib/commons-collections-3.2.jar:/Users/andy/Code/MediaFlow/lib/commons-configuration-1.5.jar:/Users/andy/Code/MediaFlow/lib/commons-lang-2.3.jar:/Users/andy/Code/MediaFlow/lib/commons-logging-1.1.1.jar:/Users/andy/Code/MediaFlow/lib/commons-logging-adapters-1.1.1.jar:/Users/andy/Code/MediaFlow/lib/commons-logging-api-1.1.1.jar:/Users/andy/Code/MediaFlow/lib/jflac-1.2.jar:/Users/andy/Code/MediaFlow/lib/jl1.0.jar:/Users/andy/Code/MediaFlow/lib/jogg-0.0.7.jar:/Users/andy/Code/MediaFlow/lib/jorbis-0.0.15.jar:/Users/andy/Code/MediaFlow/lib/junit-4.4.jar:/Users/andy/Code/MediaFlow/lib/mp3spi1.9.4.jar:/Users/andy/Code/MediaFlow/lib/postgresql-8.4-701.jdbc3.jar:/Users/andy/Code/MediaFlow/lib/servlet-api.jar:/Users/andy/Code/MediaFlow/lib/tritonus_share.jar:/Users/andy/Code/MediaFlow/lib/vorbisspi1.0.2.jar:/usr/share/ant/lib/ant-launcher.jar:/usr/share/ant/lib/ant.jar:/usr/share/ant/lib/ant-junit.jar" />
+    <property name="mainslaveclass" value="house.neko.util.Bootstrap" />
+    <property name="tests.srcstub" value="tests/stubsource" />
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification" />
+    <property name="java.vm.specification.version" value="1.0" />
+    <property name="sun.cpu.endian" value="little" />
+    <property name="sun.os.patch.level" value="unknown" />
+    <property name="env.HOME" value="/Users/andy" />
+    <property name="compile.debug" value="true" />
+    <property name="java.io.tmpdir" value="/var/folders/AL/ALK0zV-EGcuVQ30RhhUBlU+++TI/-Tmp-/" />
+    <property name="java.vendor.url.bug" value="http://bugreport.apple.com/" />
+    <property name="env.SSH_AUTH_SOCK" value="/tmp/launch-8IWMmL/Listeners" />
+    <property name="env.COMMAND_MODE" value="unix2003" />
+    <property name="os.arch" value="i386" />
+    <property name="java.awt.graphicsenv" value="apple.awt.CGraphicsEnvironment" />
+    <property name="java.ext.dirs" value="/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home/lib/ext" />
+    <property name="user.dir" value="/Users/andy/Code/MediaFlow" />
+    <property name="mrj.version" value="1050.1.5.0_19-304" />
+    <property name="line.separator" value="
+" />
+    <property name="java.vm.name" value="Java HotSpot(TM) Client VM" />
+    <property name="basedir" value="/Users/andy/Code/MediaFlow" />
+    <property name="ant.java.version" value="1.5" />
+    <property name="ant.core.lib" value="/usr/share/ant/lib/ant.jar" />
+    <property name="file.encoding" value="MacRoman" />
+    <property name="mastercontextname" value="/Users/andy/Code/MediaFlow/WEB-INF/context.xml" />
+    <property name="tests.src" value="tests/source" />
+    <property name="java.specification.version" value="1.5" />
+  </properties>
+  <testcase classname="house.neko.media.itunes.ITunesMediaLibraryXMLFileTest" name="testURLConversion" time="0.123" />
+  <testcase classname="house.neko.media.itunes.ITunesMediaLibraryXMLFileTest" name="testMimeTypeGetter" time="0.098" />
+  <system-out><![CDATA[Initializing configuration
+Converting 'file://localhost/Music/Compilations/Garage%20Inc.%20%5BDisc%201%5D/1-04%20Turn%20The%20Page.m4a' to 'file:///Music/Compilations/Garage%20Inc.%20%5BDisc%201%5D/1-04%20Turn%20The%20Page.m4a'
+Converting 'file://localhost/Music/Brent%20Unkbelt/Unknown%20Album/World%20War.mp3' to 'file:///Music/Brent%20Unkbelt/Unknown%20Album/World%20War.mp3'
+Got mime type 'audio:x-m4a:m4a' from url 'file://localhost/Music/Compilations/Garage%20Inc.%20%5BDisc%201%5D/1-04%20Turn%20The%20Page.m4a'
+Got mime type 'audio:mpeg:mp3' from url 'file://localhost/Music/Brent%20Unkbelt/Unknown%20Album/World%20War.mp3'
+]]></system-out>
+  <system-err><![CDATA[[INFO] DatabaseDataStore - Using driver PostgreSQL Native Driver version PostgreSQL 8.4 JDBC3 (build 701)
+[INFO] DatabaseDataStore - Connected to PostgreSQL version 8.4.0
+]]></system-err>
+</testsuite>
