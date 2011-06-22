@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
+import javax.swing.JTabbedPane;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -117,6 +118,10 @@ public class SlaveCDImporter
 					discs.lastElement().add(m);
 				}
 				if(log.isInfoEnabled()) { log.info("Found " + discs.size() + " possible matches"); }
+				if(discs.size() > 1)
+				{	// pick input
+					pickDisc(discs);
+				}
 				if(discs.size() < 1)
 				{
 					// open input to type
@@ -185,6 +190,58 @@ public class SlaveCDImporter
 		}
 		if(log.isDebugEnabled())
 		{	log.debug("Done with CD import"); }
+	}
+	
+	private void pickDisc(Vector<Vector<Media>> discs)
+	{
+		try
+		{
+			JTabbedPane tp = new JTabbedPane();
+			for(Vector<Media> md : (Vector<Media>[]) discs.toArray())
+			{
+				JPanel p = new JPanel();
+				GridBagLayout gridbag = new GridBagLayout();
+				GridBagConstraints gc = new GridBagConstraints();
+				gc.weightx = 100;
+				gc.weighty = 100;
+				p.setLayout(gridbag);
+				gc.anchor = GridBagConstraints.NORTHWEST;
+				gc.ipadx = 7;
+				int y = 0;
+				JTextField[] title = new JTextField[md.size()];
+				JTextField[] artist = new JTextField[md.size()];
+				JTextField[] album = new JTextField[md.size()];
+				addLabel(p, new JLabel("Album"), gridbag, gc, 2, y);
+				addLabel(p, new JLabel("Artist"), gridbag, gc, 4, y);
+				addLabel(p, new JLabel("Title"), gridbag, gc, 6, y);
+				for(int i = 0; i < md.size(); i++)
+				{
+					title[i] = new JTextField(20);
+					artist[i] = new JTextField(20);
+					album[i] = new JTextField(20);
+					title[i].setText(md.elementAt(i).getName());
+					artist[i].setText(md.elementAt(i).getArtist());
+					album[i].setText(md.elementAt(i).getAlbum());
+					addLabel(p, new JLabel("Track " + (i+1)), gridbag, gc, 0, ++y);
+					addField(p, album[i], gridbag, gc, 2, y);
+					addField(p, artist[i], gridbag, gc, 4, y);
+					addField(p, title[i], gridbag, gc, 6, y);
+				}
+				tp.addTab(md.elementAt(0).getArtist() + " - " + md.elementAt(0).getAlbum(), p);
+			}
+			if(JOptionPane.showConfirmDialog(null, tp, "Pick Disc", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+			{	// pop all off except choice
+				for(int selectedIndex = tp.getSelectedIndex(); selectedIndex > 0; selectedIndex--)
+				{	discs.remove(0); }
+				while(dics.size() > 1)
+				{	discs.remove(1); }
+			} else {
+				// pop all off
+				discs.clear();
+			}
+		} catch(Exception e) {
+			log.error("unable to pick titles for CD import", e);
+		}
 	}
 	
 	private void getInput(Vector<Vector<Media>> discs)
