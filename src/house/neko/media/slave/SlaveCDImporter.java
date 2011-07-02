@@ -50,7 +50,7 @@ public class SlaveCDImporter
 		try
 		{
 			if(log.isDebugEnabled()) { log.debug("getting CDDB info"); }
-			Process cddbExec = Runtime.getRuntime().exec("cd-info");
+			Process cddbExec = Runtime.getRuntime().exec("cd-info --no-cddb-cache");
 			java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(cddbExec.getInputStream()));
 			READLOOP:
 			{
@@ -118,7 +118,7 @@ public class SlaveCDImporter
 					discs.lastElement().add(m);
 				}
 				if(log.isInfoEnabled()) { log.info("Found " + discs.size() + " possible matches"); }
-				if(discs.size() > 1)
+				if(discs.size() > 0)
 				{	// pick input
 					pickDisc(discs);
 				}
@@ -177,9 +177,6 @@ public class SlaveCDImporter
 						}
 						tmpFile.delete();
 					}
-				} else {
-					
-					
 				}
 			}
 			if(cddbExec.waitFor() != 0)
@@ -197,8 +194,9 @@ public class SlaveCDImporter
 		try
 		{
 			JTabbedPane tp = new JTabbedPane();
-			for(Vector<Media> md : (Vector<Media>[]) discs.toArray())
+			for(int k = 0; k < discs.size(); k++)
 			{
+				Vector<Media> md = discs.elementAt(k);
 				JPanel p = new JPanel();
 				GridBagLayout gridbag = new GridBagLayout();
 				GridBagConstraints gc = new GridBagConstraints();
@@ -231,12 +229,14 @@ public class SlaveCDImporter
 			}
 			if(JOptionPane.showConfirmDialog(null, tp, "Pick Disc", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
 			{	// pop all off except choice
+				log.info("Picked disc #" + tp.getSelectedIndex());
 				for(int selectedIndex = tp.getSelectedIndex(); selectedIndex > 0; selectedIndex--)
 				{	discs.remove(0); }
-				while(dics.size() > 1)
+				while(discs.size() > 1)
 				{	discs.remove(1); }
 			} else {
 				// pop all off
+				log.info("Canceled picking, clearing list");
 				discs.clear();
 			}
 		} catch(Exception e) {
@@ -310,6 +310,8 @@ public class SlaveCDImporter
 						m.setTrackNumber(i+1);
 						discs.lastElement().add(m);
 					}
+				} else {
+					discs.clear();
 				}
 			}
 		} catch(Exception e) {
