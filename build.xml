@@ -38,6 +38,7 @@
 	<target name="init">
 		<mkdir dir="${build}"/>
 		<mkdir dir="${dist}"/>
+		<mkdir dir="${resource}"/>
 		<mkdir dir="${tests.build}" />
 		<mkdir dir="${tests.srcstub}" />
 		<mkdir dir="${tests.stubbuild}" />
