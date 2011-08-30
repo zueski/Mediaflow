@@ -214,8 +214,13 @@
 	</target>
 	
 	<target name="clean" description="Remove build and dist directories">
+		<delete file="${slavejarname}" verbose="true"/>
+		<delete file="${jarfile}" verbose="true"/>
+		<delete file="${testjarfile}" verbose="true"/>
+		<delete file="${masterwarname}" verbose="true"/>
 		<delete dir="${build}"/>
 		<delete dir="${dist}"/>
 		<delete dir="${javadoc.destdir}"/>
+		<delete dir="${tests.build}"/>
 	</target>
 </project>
