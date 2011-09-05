@@ -7,7 +7,7 @@ import house.neko.media.common.ConfigurationManager;
 
 import house.neko.media.itunes.ITunesMediaLibraryXMLFile;
 
-import house.neko.media.device.rockbox.RockBox;
+import house.neko.media.device.Exporter;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -180,22 +180,22 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		
 		deviceMenu = new JMenu("Device");
 		
-		JMenuItem syncRockBox = new JMenuItem("Sync RockBox", 'R');
-		syncRockBox.setMnemonic('R');
-		syncRockBox.setAccelerator(KeyStroke.getKeyStroke('R', CONTROLCOMMAND_MASK));
-		syncRockBox.addActionListener(this);
-		deviceMenu.add(syncRockBox);
+		JMenuItem syncDevice = new JMenuItem("Sync Device", 'R');
+		syncDevice.setMnemonic('R');
+		syncDevice.setAccelerator(KeyStroke.getKeyStroke('R', CONTROLCOMMAND_MASK));
+		syncDevice.addActionListener(this);
+		deviceMenu.add(syncDevice);
 		
-		JMenuItem syncRandomRockBox = new JMenuItem("Sync RockBox 100 Random", 'N');
-		syncRandomRockBox.setMnemonic('N');
-		syncRandomRockBox.setAccelerator(KeyStroke.getKeyStroke('R', CONTROLCOMMAND_MASK | InputEvent.SHIFT_DOWN_MASK));
-		syncRandomRockBox.addActionListener(this);
-		deviceMenu.add(syncRandomRockBox);
+		JMenuItem syncDeviceRandom = new JMenuItem("Sync device 100 Random", 'N');
+		syncDeviceRandom.setMnemonic('N');
+		syncDeviceRandom.setAccelerator(KeyStroke.getKeyStroke('R', CONTROLCOMMAND_MASK | InputEvent.SHIFT_DOWN_MASK));
+		syncDeviceRandom.addActionListener(this);
+		deviceMenu.add(syncDeviceRandom);
 		
-		JMenuItem purgeRockBox = new JMenuItem("Clear RockBox", 'P');
-		purgeRockBox.setMnemonic('P');
-		purgeRockBox.addActionListener(this);
-		deviceMenu.add(purgeRockBox);
+		JMenuItem clearDevice = new JMenuItem("Clear Device", 'P');
+		clearDevice.setMnemonic('P');
+		clearDevice.addActionListener(this);
+		deviceMenu.add(clearDevice);
 		
 		menubar.add(deviceMenu);
 		
@@ -277,35 +277,35 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		} else if("Get track info".equals(e.getActionCommand())) {
 			log.trace("Getting track info for selected track");
 			view.openInfoForSelected();
-		} else if("Sync RockBox".equals(e.getActionCommand())) {
-			log.trace("Syncing to RockBox");
+		} else if("Sync device".equals(e.getActionCommand())) {
+			log.trace("Syncing to device");
 			try
 			{
-				RockBox rb = new RockBox(library, ConfigurationManager.getConfiguration("Slave(0).Device(0).RockBox(0)"));
-				rb.syncToFull();
-				log.trace("Done syncing to RockBox");
+				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
+				exporter.syncToFull();
+				log.trace("Done syncing to device");
 			} catch(Exception ex) {
-				log.error("Unable to sync to RockBox", ex);
+				log.error("Unable to sync to device", ex);
 			}
-		} else if("Sync RockBox 100 Random".equals(e.getActionCommand())) {
-			log.trace("Syncing random 100 to RockBox");
+		} else if("Sync device 100 Random".equals(e.getActionCommand())) {
+			log.trace("Syncing random 100 to device");
 			try
 			{
-				RockBox rb = new RockBox(library, ConfigurationManager.getConfiguration("Slave(0).Device(0).RockBox(0)"));
-				rb.syncRandom(1000);
-				log.trace("Done syncing random to RockBox");
+				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
+				exporter.syncRandom(1000);
+				log.trace("Done syncing random to device");
 			} catch(Exception ex) {
-				log.error("Unable to sync to RockBox", ex);
+				log.error("Unable to sync to device", ex);
 			}
-		} else if("Clear RockBox".equals(e.getActionCommand())) {
-			log.trace("Purging RockBox");
+		} else if("Clear device".equals(e.getActionCommand())) {
+			log.trace("Purging device");
 			try
 			{
-				RockBox rb = new RockBox(library, ConfigurationManager.getConfiguration("Slave(0).Device(0).RockBox(0)"));
-				rb.deleteAll();
-				log.trace("Done purging to RockBox");
+				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
+				exporter.clearDevice();
+				log.trace("Done purging to device");
 			} catch(Exception ex) {
-				log.error("Unable to sync to RockBox", ex);
+				log.error("Unable to sync to device", ex);
 			}
 		} else if("Quit".equals(e.getActionCommand())) {
 			if(log.isDebugEnabled())

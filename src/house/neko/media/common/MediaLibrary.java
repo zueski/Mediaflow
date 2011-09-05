@@ -167,7 +167,22 @@ public class MediaLibrary
 	 */
 	public Media getMedia(String id)
 	{	return cache.get(id); }
-
+	
+	public Media getMediaByFile(File f)
+	{
+		for(Media m : getAllMedia())
+		{
+			MediaLocation l = m.getLocalLocation();
+			try
+			{
+				File tf = l.getFile();
+				if(tf != null && tf.compareTo(f) == 0)
+				{	return m; }
+			} catch(Exception e) { }
+		}
+		return null;
+	}
+	
 	public Media[] getAllMedia()
 	{	return cache.values().toArray(new Media[cache.size()]); }
 	

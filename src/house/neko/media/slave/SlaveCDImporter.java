@@ -142,7 +142,17 @@ public class SlaveCDImporter
 						l.setLocationURLString(encodedFile.toURI().toURL().toString());
 						if(encodedFile.exists())
 						{
-							if(log.isInfoEnabled()) { log.info("file already exists, skipping " + encodedFile.getAbsolutePath()); }
+							Media fm = library.getMediaByFile(encodedFile);
+							if(fm != null)
+							{
+								if(log.isInfoEnabled()) { log.info("media already exists, skipping import, " + encodedFile.getAbsolutePath()); }
+								continue;
+							}
+							// else add
+							l.setSize(encodedFile.length());
+							m.setID(Media.generateID());
+							if(log.isDebugEnabled()) { log.debug("adding existing track " + m.getTrackNumber() + ": " + m); }
+							library.add(m);
 							continue;
 						}
 						File tmpFile = File.createTempFile("tmpMediaFlow_", "_" + m.getTrackNumber() + ".wav");

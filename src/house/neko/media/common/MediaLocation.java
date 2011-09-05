@@ -74,6 +74,25 @@ public class MediaLocation implements java.io.Serializable
 		}
 	}
 	
+	public File getFile()
+		throws IOException
+	{
+		try
+		{
+			URI uri = getLocationURI();
+			if("file".equals(uri.getScheme()))
+			{
+				File f = new File(uri);
+				return f;
+			}
+			return null;
+		} catch(Exception e) {
+			IOException ioe = new IOException("Exception getting file for '" + locationURLString + "'");
+			ioe.initCause(e);
+			throw ioe;
+		}
+	}
+	
 	private java.net.URI getLocationURI()
 	{
 		URI uri = null;
