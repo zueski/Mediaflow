@@ -67,7 +67,7 @@ public class Bootstrap
 				if(ls[i].isFile() && ls[i].getName().endsWith(".jar"))
 				{
 					System.out.println("Found lib " + ls[i].getPath());
-					v.add(ls[i].toURL());
+					v.add(ls[i].toURI().toURL());
 				} else if(ls[i].isDirectory()) {
 					loadFilesToURLVector(ls[i], v);
 				}

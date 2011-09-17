@@ -1,4 +1,4 @@
-package house.neko.media.device.rockbox;
+package house.neko.media.device;
 
 import house.neko.media.common.Media;
 import house.neko.media.common.MediaLocation;
@@ -18,18 +18,24 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 
 
-public class RockBox
+public class RockBox implements house.neko.media.device.Device
 {
 	private Log log;
 	private HierarchicalConfiguration config;
-	private MediaLibrary library;
+	private Exporter exporter;
 	private File rockboxMusicFolder;
 	
-	public RockBox(MediaLibrary library, HierarchicalConfiguration config)
+	private final java.util.TreeSet<String> _valid_sub_mime_types;
+	
+	public RockBox(Exporter exporter, HierarchicalConfiguration config)
 	{
 		this.log = ConfigurationManager.getLog(getClass());
-		this.library = library;
 		this.config = config;
+		this.exporter = exporter;
+		this._valid_sub_mime_types = new java.util.TreeSet<String>();
+		this._valid_sub_mime_types.add("mp3");
+		this._valid_sub_mime_types.add("m4a");
+		this._valid_sub_mime_types.add("flac");
 		try
 		{
 			rockboxMusicFolder = new File(config.getString("MountPointMusicDir"));
@@ -38,140 +44,69 @@ public class RockBox
 		}
 	}
 	
-	public void syncRandom(int count)
-		throws Exception
-	{
-		Media[] m = library.getAllMedia();
-		Random r = new Random(System.currentTimeMillis());
-		if(count > m.length)
-		{	count = m.length; }
-		int i = 0;
-		for(int c = 0; c < count; c++)
-		{
-			boolean found = false;
-			do
-			{
-				i = r.nextInt(m.length);
-				if(m[i] != null)
-				{
-					if(log.isTraceEnabled())
-					{	log.trace("Syncing track " + m[i]); }
-					copyTo(m[i]);
-					m[i] = null;
-					found = true;
-				}
-			} while(!found);
-		}
-	}
-	
-	public void syncToFull()
-		throws Exception
-	{
-		Media[] m = library.getAllMedia();
-		Random r = new Random(System.currentTimeMillis());
-		int abortSyncAfterFailedCount = config.getInt("AbortSyncAfterFailedCount", 20);
-		int abortCount = 0;
-		int abortRecoverCount = 0;
-		int songsSyncd = 0;
-		int i = 0;
-		int lastChecked = 0;
-		int missedcount = 0;
-		long freeSpace = getAvailableSpaceForTracks();
-		SYNCLOOP:while(abortSyncAfterFailedCount > abortCount)
-		{
-			boolean found = false;
-			if(lastChecked++ > 50)
-			{	freeSpace = getAvailableSpaceForTracks(); lastChecked = 0; }
-			int tryUntil = 1000;  // we should give up at somepoint, this problem should be made more correct later
-			do
-			{
-				i = r.nextInt(m.length);
-				if(m[i] != null)
-				{
-					MediaLocation l = m[i].getLocation();
-					if(l.getSize() != null && l.getSize() >= freeSpace)
-					{	abortCount++; continue; } // file is too big, lets try again
-					if(log.isTraceEnabled())
-					{	log.trace("Syncing track " + m[i]); }
-					File copiedFile = copyTo(m[i]);
-					if(copiedFile != null)
-					{
-						freeSpace -= copiedFile.length(); 
-						songsSyncd++;
-						if(abortCount > 0 && ++abortRecoverCount > abortSyncAfterFailedCount)
-						{	abortCount = abortRecoverCount = 0; }
-					} else {
-						abortCount++; 
-					}
-					m[i] = null;
-					found = true;
-				} else {
-					if(missedcount++ > 300)
-					{
-						if(log.isTraceEnabled())
-						{	log.trace("Compacting list, to many misses"); }
-						Vector<Media> templist = new Vector<Media>(m.length);
-						for(Media tmpmedia : m)
-						{
-							if(tmpmedia != null)
-							{	templist.add(tmpmedia); }
-						}
-						if(templist.size() < 1)
-						{	// exit, no more valid tracks left
-							if(log.isTraceEnabled())
-							{	log.trace("No valid tracks left, stopping sync"); }
-							break SYNCLOOP;
-						}
-						m = templist.toArray(new Media[templist.size()]);
-						missedcount = 0;
-					}
-				}
-			} while(!found && tryUntil-- > 0);
-		}
-	}
-	
-	private File copyTo(Media m)
-		throws Exception
+	public File copyTo(Media m)
+		throws IOException
 	{
 		MediaLocation l = m.getLocation();
 		if(l == null)
 		{
-			if(log.isTraceEnabled())
-			{	log.trace("Skipping '" + m + "', no location available!?"); }
+			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', no location available!?"); }
 			return null;
 		}
-		if(l.getMimeType() == null)
+		MimeType mimeType = l.getMimeType();
+		if(mimeType == null)
 		{
-			if(log.isTraceEnabled())
-			{	log.trace("Skipping '" + m + "', mime type not known!"); }
+			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', mime type not known!"); }
 			return null;
 		}
-		File df = getDeviceFile(m, l);
+		if(!"audio".equalsIgnoreCase(mimeType.getMimeType()))
+		{
+			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', mime not audio!"); }
+			return null;
+		}
+		boolean convert = !_valid_sub_mime_types.contains(mimeType.getMimeSubType());
+		File df = convert ? getDeviceFile(m, l) : getConvertedDeviceFile(m, l);
 		if(df == null)
 		{
-			if(log.isTraceEnabled())
-			{	log.trace("Skipping '" + m + "', cannot exist!"); }
+			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', cannot exist!"); }
 			return null;
 		}
 		if(df.exists())
 		{
-			if(log.isTraceEnabled())
-			{	log.trace("Skipping '" + m + "', already exists!"); }
+			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', already exists!"); }
 			return null;
 		}
-		if(log.isTraceEnabled())
-		{	log.trace(" copying '" + m + "' as " + df.getAbsolutePath()); }
+		if(log.isTraceEnabled()) { log.trace(" copying '" + m + "' as " + df.getAbsolutePath()); }
 		df.getParentFile().mkdirs();
 		FileOutputStream fos;
-		InputStream is;
 		try
 		{
 			fos = new FileOutputStream(df);
-			is = l.getInputStream();
 		} catch(IOException ioe) {
-			log.error("Unable to sync media track " + m, ioe);
+			log.error("Unable to open output stream '" + df.getAbsolutePath() + "' for " + m, ioe);
 			return null;
 		}
+		InputStream is;
+		if(convert)
+		{
+			if(log.isTraceEnabled()) { log.trace("Need to convert mime type " + mimeType.getMimeSubType() + " for '" + m + "'"); }
+			try
+			{
+				is = l.getInputStream();
+			} catch(IOException ioe) {
+				log.error("Unable to convert input stream for " + m, ioe);
+				return null;
+			}
+		} else {
+			try
+			{
+				is = l.getInputStream();
+			} catch(IOException ioe) {
+				log.error("Unable to open input stream for " + m, ioe);
+				return null;
+			}
+		}
+		
 		byte[] buff = new byte[1024];
 		int b = 0;
 		while((b = is.read(buff)) > 0)
@@ -190,11 +125,9 @@ public class RockBox
 	public void deleteAll()
 		throws IOException
 	{
-		if(log.isTraceEnabled())
-		{	log.trace("Free space is " + getFreeSpace() + " before deleting all"); }
+		if(log.isTraceEnabled()) { log.trace("Free space is " + getFreeSpace() + " before deleting all"); }
 		deleteAll(rockboxMusicFolder, true);
-		if(log.isTraceEnabled())
-		{	log.trace("Free space is " + getFreeSpace() + " after deleting all"); }
+		if(log.isTraceEnabled()) { log.trace("Free space is " + getFreeSpace() + " after deleting all"); }
 	}
 	
 	private void deleteAll(File file, boolean atTop)
@@ -208,22 +141,31 @@ public class RockBox
 				{
 					if(".".equals(f.getName()) || "..".equals(f.getName()))
 					{	continue DIRLOOP; }
-					if(log.isTraceEnabled())
-					{	log.trace("Deleting " + f.getAbsolutePath()); }
+					if(log.isTraceEnabled()) { log.trace("Deleting " + f.getAbsolutePath()); }
 					deleteAll(f, false);
 				}
 			}
 			if(!atTop)
 			{
-				if(log.isTraceEnabled())
-				{	log.trace("Deleting " + file.getAbsolutePath()); }
+				if(log.isTraceEnabled()) { log.trace("Deleting " + file.getAbsolutePath()); }
 				file.delete();
 			}
 		}
 	}
 	
 	public File getDeviceFile(Media m, MediaLocation l)
-		throws Exception
+		throws IOException
+	{
+		File f = new File(rockboxMusicFolder, m.getArtist());
+		String album = m.getAlbum();
+		if(album != null)
+		{	f = new File(f, sanitizePathPart(album)); }
+		f = new File(f, sanitizePathPart(m.getName()) + "." + l.getMimeType().getFileExtension());
+		return f;
+	}
+	
+	public File getConvertedDeviceFile(Media m, MediaLocation l)
+		throws IOException
 	{
 		File f = new File(rockboxMusicFolder, m.getArtist());
 		String album = m.getAlbum();
@@ -236,19 +178,17 @@ public class RockBox
 	private String sanitizePathPart(String p)
 	{	return p == null ? "" : p.replaceAll("[.\"/\\*?<>|:]", "_"); }
 	
-	private long getFreeSpace()
+	public long getFreeSpace()
 	{
 		long freeSpace = rockboxMusicFolder.getUsableSpace();
-		if(log.isTraceEnabled())
-		{	log.trace("Free space left on device is " + freeSpace + " bytes"); }
+		if(log.isTraceEnabled()) { log.trace("Free space left on device is " + freeSpace + " bytes"); }
 		return freeSpace;
 	}
 	
-	private long getAvailableSpaceForTracks()
+	public long getAvailableSpaceForTracks()
 	{
 		long freeSpace = getFreeSpace() - config.getLong("ReservedSpace", 0L);
-		if(log.isTraceEnabled())
-		{	log.trace("Avaliable free space left on device is " + freeSpace + " bytes"); }
+		if(log.isTraceEnabled()) {log.trace("Avaliable free space left on device is " + freeSpace + " bytes"); }
 		return freeSpace;
 	}
 }

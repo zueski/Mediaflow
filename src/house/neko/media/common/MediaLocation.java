@@ -53,7 +53,7 @@ public class MediaLocation implements java.io.Serializable
 		try
 		{
 			URI uri = getLocationURI();
-			InputStream is = null;
+			BufferedInputStream is = null;
 			String scheme = uri.getScheme();
 			if("file".equals(scheme))
 			{
@@ -62,13 +62,32 @@ public class MediaLocation implements java.io.Serializable
 				{	throw new IOException("Unable to read file '" + f.getAbsolutePath() + "'"); }
 				is = new BufferedInputStream(new FileInputStream(f));
 			} else if("http".equals(scheme) || "https".equals(scheme)) {
-				is = uri.toURL().openConnection().getInputStream(); 
+				is = new BufferedInputStream(uri.toURL().openConnection().getInputStream());
 			} else {
 				throw new IOException("Unknown scheme for URI '" + uri+ "'");
 			}
 			return is;
 		} catch(Exception e) {
 			IOException ioe = new IOException("Exception getting input stream for '" + locationURLString + "'");
+			ioe.initCause(e);
+			throw ioe;
+		}
+	}
+	
+	public File getFile()
+		throws IOException
+	{
+		try
+		{
+			URI uri = getLocationURI();
+			if("file".equals(uri.getScheme()))
+			{
+				File f = new File(uri);
+				return f;
+			}
+			return null;
+		} catch(Exception e) {
+			IOException ioe = new IOException("Exception getting file for '" + locationURLString + "'");
 			ioe.initCause(e);
 			throw ioe;
 		}
