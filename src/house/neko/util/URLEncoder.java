@@ -84,8 +84,8 @@ public class URLEncoder
 					// Converting each byte in the buffer
 					byte toEncode = ba[j];
 					rewrittenPath.append('%');
-					int low = (int) (toEncode & 0x0f);
-					int high = (int) ((toEncode & 0xf0) >> 4);
+					int low = toEncode & 0x0f;
+					int high = (toEncode & 0xf0) >> 4;
 					rewrittenPath.append(hexadecimal[high]);
 					rewrittenPath.append(hexadecimal[low]);
 				}

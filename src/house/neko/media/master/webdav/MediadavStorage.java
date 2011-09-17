@@ -408,7 +408,7 @@ public class MediadavStorage extends HttpServlet
 					Enumeration<String> lockNullResourcesList = currentLockNullResources.elements();
 					while (lockNullResourcesList.hasMoreElements()) 
 					{
-						String lockNullPath = (String) lockNullResourcesList.nextElement();
+						String lockNullPath = lockNullResourcesList.nextElement();
 						if(lockNullPath.equals(path)) 
 						{
 							resp.setStatus(WebdavStatus.SC_MULTI_STATUS);
@@ -449,7 +449,7 @@ public class MediadavStorage extends HttpServlet
 			Stack<String> stackBelow = new Stack<String>();
 			while ((!stack.isEmpty()) && (depth >= 0)) 
 			{
-				String currentPath = (String) stack.pop();
+				String currentPath = stack.pop();
 				parseProperties(req, generatedXML, currentPath, type, properties);
 				try 
 				{
@@ -464,7 +464,7 @@ public class MediadavStorage extends HttpServlet
 						NamingEnumeration<NameClassPair> enumeration = resources.list(currentPath);
 						while (enumeration.hasMoreElements()) 
 						{
-							NameClassPair ncPair = (NameClassPair) enumeration.nextElement();
+							NameClassPair ncPair = enumeration.nextElement();
 							String newPath = currentPath;
 							if(!(newPath.endsWith("/")))
 							{	newPath += "/"; }
@@ -487,7 +487,7 @@ public class MediadavStorage extends HttpServlet
 						Enumeration<String> lockNullResourcesList = currentLockNullResources.elements();
 						while (lockNullResourcesList.hasMoreElements()) 
 						{
-							String lockNullPath = (String) lockNullResourcesList.nextElement();
+							String lockNullPath = lockNullResourcesList.nextElement();
 							parseLockNullProperties(req, generatedXML, lockNullPath, type, properties);
 						}
 					}
@@ -893,7 +893,7 @@ public class MediadavStorage extends HttpServlet
 				locksList = collectionLocks.elements();
 				while (locksList.hasMoreElements()) 
 				{
-					LockInfo currentLock = (LockInfo) locksList.nextElement();
+					LockInfo currentLock = locksList.nextElement();
 					if(currentLock.hasExpired()) 
 					{
 						resourceLocks.remove(currentLock.path);
@@ -907,7 +907,7 @@ public class MediadavStorage extends HttpServlet
 				locksList = resourceLocks.elements();
 				while (locksList.hasMoreElements()) 
 				{
-					LockInfo currentLock = (LockInfo) locksList.nextElement();
+					LockInfo currentLock = locksList.nextElement();
 					if(currentLock.hasExpired()) 
 					{
 						resourceLocks.remove(currentLock.path);
@@ -930,7 +930,7 @@ public class MediadavStorage extends HttpServlet
 					{
 						generatedXML.writeElement(null, "response", XMLWriter.OPENING);
 						generatedXML.writeElement(null, "href", XMLWriter.OPENING);
-						generatedXML.writeText((String) lockPathsList.nextElement());
+						generatedXML.writeText(lockPathsList.nextElement());
 						generatedXML.writeElement(null, "href", XMLWriter.CLOSING);
 						generatedXML.writeElement(null, "status", XMLWriter.OPENING);
 						generatedXML.writeText("HTTP/1.1 " + WebdavStatus.SC_LOCKED + " " + WebdavStatus.getStatusText(WebdavStatus.SC_LOCKED));
@@ -948,7 +948,7 @@ public class MediadavStorage extends HttpServlet
 				locksList = collectionLocks.elements();
 				while (locksList.hasMoreElements()) 
 				{
-					LockInfo currentLock = (LockInfo) locksList.nextElement();
+					LockInfo currentLock = locksList.nextElement();
 					if(currentLock.path.equals(lock.path)) 
 					{
 						if(currentLock.isExclusive()) 
@@ -975,7 +975,7 @@ public class MediadavStorage extends HttpServlet
 			} else {
 				// Locking a single resource
 				// Retrieving an already existing lock on that resource
-				LockInfo presentLock = (LockInfo) resourceLocks.get(lock.path);
+				LockInfo presentLock = resourceLocks.get(lock.path);
 				if(presentLock != null) 
 				{
 					if((presentLock.isExclusive()) || (lock.isExclusive())) 
@@ -1021,14 +1021,14 @@ public class MediadavStorage extends HttpServlet
 			if(ifHeader == null)
 			{	ifHeader = ""; }
 			// Checking resource locks
-			LockInfo toRenew = (LockInfo) resourceLocks.get(path);
+			LockInfo toRenew = resourceLocks.get(path);
 			Enumeration<String> tokenList = null;
 			if(lock != null) 
 			{	// At least one of the tokens of the locks must have been given
 				tokenList = toRenew.tokens.elements();
 				while (tokenList.hasMoreElements()) 
 				{
-					String token = (String) tokenList.nextElement();
+					String token = tokenList.nextElement();
 					if(ifHeader.indexOf(token) != -1) 
 					{
 						toRenew.expiresAt = lock.expiresAt;
@@ -1040,13 +1040,13 @@ public class MediadavStorage extends HttpServlet
 			Enumeration<LockInfo> collectionLocksList = collectionLocks.elements();
 			while (collectionLocksList.hasMoreElements())
 			{
-				toRenew = (LockInfo) collectionLocksList.nextElement();
+				toRenew = collectionLocksList.nextElement();
 				if(path.equals(toRenew.path)) 
 				{
 					tokenList = toRenew.tokens.elements();
 					while (tokenList.hasMoreElements()) 
 					{
-						String token = (String) tokenList.nextElement();
+						String token = tokenList.nextElement();
 						if(ifHeader.indexOf(token) != -1) 
 						{
 							toRenew.expiresAt = lock.expiresAt;
@@ -1097,7 +1097,7 @@ public class MediadavStorage extends HttpServlet
 		if(lockTokenHeader == null)
 		{	lockTokenHeader = ""; }
 		// Checking resource locks
-		LockInfo lock = (LockInfo) resourceLocks.get(path);
+		LockInfo lock = resourceLocks.get(path);
 		Enumeration<String> tokenList = null;
 		if(lock != null) 
 		{
@@ -1105,7 +1105,7 @@ public class MediadavStorage extends HttpServlet
 			tokenList = lock.tokens.elements();
 			while (tokenList.hasMoreElements()) 
 			{
-				String token = (String) tokenList.nextElement();
+				String token = tokenList.nextElement();
 				if(lockTokenHeader.indexOf(token) != -1) 
 				{	lock.tokens.removeElement(token); }
 			}
@@ -1120,13 +1120,13 @@ public class MediadavStorage extends HttpServlet
 		Enumeration<LockInfo> collectionLocksList = collectionLocks.elements();
 		while (collectionLocksList.hasMoreElements()) 
 		{
-			lock = (LockInfo) collectionLocksList.nextElement();
+			lock = collectionLocksList.nextElement();
 			if(path.equals(lock.path)) 
 			{
 				tokenList = lock.tokens.elements();
 				while (tokenList.hasMoreElements()) 
 				{
-					String token = (String) tokenList.nextElement();
+					String token = tokenList.nextElement();
 					if(lockTokenHeader.indexOf(token) != -1) 
 					{
 						lock.tokens.removeElement(token);
@@ -1237,7 +1237,7 @@ public class MediadavStorage extends HttpServlet
 	 */
 	private boolean isLocked(String path, String ifHeader) 
 	{	// Checking resource locks
-		LockInfo lock = (LockInfo) resourceLocks.get(path);
+		LockInfo lock = resourceLocks.get(path);
 		Enumeration<String> tokenList = null;
 		if((lock != null) && (lock.hasExpired())) 
 		{
@@ -1248,7 +1248,7 @@ public class MediadavStorage extends HttpServlet
 			boolean tokenMatch = false;
 			while (tokenList.hasMoreElements()) 
 			{
-				String token = (String) tokenList.nextElement();
+				String token = tokenList.nextElement();
 				if(ifHeader.indexOf(token) != -1)
 				{	tokenMatch = true; }
 			}
@@ -1259,7 +1259,7 @@ public class MediadavStorage extends HttpServlet
 		Enumeration<LockInfo> collectionLocksList = collectionLocks.elements();
 		while (collectionLocksList.hasMoreElements()) 
 		{
-			lock = (LockInfo) collectionLocksList.nextElement();
+			lock = collectionLocksList.nextElement();
 			if(lock.hasExpired()) 
 			{
 				collectionLocks.removeElement(lock);
@@ -1268,7 +1268,7 @@ public class MediadavStorage extends HttpServlet
 				boolean tokenMatch = false;
 				while (tokenList.hasMoreElements()) 
 				{
-					String token = (String) tokenList.nextElement();
+					String token = tokenList.nextElement();
 					if(ifHeader.indexOf(token) != -1)
 					{	tokenMatch = true; }
 				}
@@ -1439,7 +1439,7 @@ public class MediadavStorage extends HttpServlet
 				NamingEnumeration<NameClassPair> enumeration = resources.list(source);
 				while (enumeration.hasMoreElements()) 
 				{
-					NameClassPair ncPair = (NameClassPair) enumeration.nextElement();
+					NameClassPair ncPair = enumeration.nextElement();
 					String childDest = dest;
 					if(!childDest.equals("/"))
 					{	childDest += "/"; }
@@ -1639,8 +1639,8 @@ public class MediadavStorage extends HttpServlet
 		Enumeration<String> pathList = errorList.keys();
 		while (pathList.hasMoreElements()) 
 		{
-			String errorPath = (String) pathList.nextElement();
-			int errorCode = ((Integer) errorList.get(errorPath)).intValue();
+			String errorPath = pathList.nextElement();
+			int errorCode = (errorList.get(errorPath)).intValue();
 			generatedXML.writeElement(null, "response", XMLWriter.OPENING);
 			generatedXML.writeElement(null, "href", XMLWriter.OPENING);
 			String toAppend = errorPath.substring(relativePath.length());
