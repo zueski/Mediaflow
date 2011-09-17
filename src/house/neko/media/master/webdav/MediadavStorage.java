@@ -1587,7 +1587,7 @@ public class MediadavStorage extends HttpServlet
 
 		while (enumeration.hasMoreElements()) 
 		{
-			NameClassPair ncPair = (NameClassPair) enumeration.nextElement();
+			NameClassPair ncPair = enumeration.nextElement();
 			String childName = path;
 			if(!childName.equals("/"))
 			{	childName += "/"; }
@@ -1779,7 +1779,7 @@ public class MediadavStorage extends HttpServlet
 				Enumeration<String> properties = propertiesVector.elements();
 				while (properties.hasMoreElements()) 
 				{
-					String property = (String) properties.nextElement();
+					String property = properties.nextElement();
 					if(property.equals("creationdate")) {
 						generatedXML.writeProperty(null, "creationdate", getISOCreationDate(cacheEntry.attributes.getCreation()));
 					} else if(property.equals("displayname")) {
@@ -1859,7 +1859,7 @@ public class MediadavStorage extends HttpServlet
 				generatedXML.writeElement(null, "propstat", XMLWriter.OPENING);
 				generatedXML.writeElement(null, "prop", XMLWriter.OPENING);
 				while (propertiesNotFoundList.hasMoreElements()) 
-				{	generatedXML.writeElement(null, (String) propertiesNotFoundList.nextElement(), XMLWriter.NO_CONTENT); }
+				{	generatedXML.writeElement(null, propertiesNotFoundList.nextElement(), XMLWriter.NO_CONTENT); }
 				generatedXML.writeElement(null, "prop", XMLWriter.CLOSING);
 				generatedXML.writeElement(null, "status", XMLWriter.OPENING);
 				generatedXML.writeText(status);
@@ -1889,7 +1889,7 @@ public class MediadavStorage extends HttpServlet
 		{	return; }
 
 		// Retrieving the lock associated with the lock-null resource
-		LockInfo lock = (LockInfo) resourceLocks.get(path);
+		LockInfo lock = resourceLocks.get(path);
 
 		if(lock == null)
 		{	return; }
@@ -1973,7 +1973,7 @@ public class MediadavStorage extends HttpServlet
 			Enumeration<String> properties = propertiesVector.elements();
 			while (properties.hasMoreElements()) 
 			{
-				String property = (String) properties.nextElement();
+				String property = properties.nextElement();
 				if(property.equals("creationdate")) 
 				{
 					generatedXML.writeProperty(null, "creationdate", getISOCreationDate(lock.creationDate.getTime()));
@@ -2025,7 +2025,7 @@ public class MediadavStorage extends HttpServlet
 				generatedXML.writeElement(null, "prop", XMLWriter.OPENING);
 
 				while (propertiesNotFoundList.hasMoreElements()) 
-				{	generatedXML.writeElement(null, (String) propertiesNotFoundList.nextElement(), XMLWriter.NO_CONTENT); }
+				{	generatedXML.writeElement(null, propertiesNotFoundList.nextElement(), XMLWriter.NO_CONTENT); }
 
 				generatedXML.writeElement(null, "prop", XMLWriter.CLOSING);
 				generatedXML.writeElement(null, "status", XMLWriter.OPENING);
@@ -2048,7 +2048,7 @@ public class MediadavStorage extends HttpServlet
 	 */
 	private boolean generateLockDiscovery(String path, XMLWriter generatedXML) 
 	{
-		LockInfo resourceLock = (LockInfo) resourceLocks.get(path);
+		LockInfo resourceLock = resourceLocks.get(path);
 		Enumeration<LockInfo> collectionLocksList = collectionLocks.elements();
 
 		boolean wroteStart = false;
@@ -2062,7 +2062,7 @@ public class MediadavStorage extends HttpServlet
 
 		while (collectionLocksList.hasMoreElements()) 
 		{
-			LockInfo currentLock = (LockInfo) collectionLocksList.nextElement();
+			LockInfo currentLock = collectionLocksList.nextElement();
 			if(path.startsWith(currentLock.path)) 
 			{
 				if(!wroteStart) 
@@ -2532,7 +2532,7 @@ class WebdavStatus
 		{
 			return "";
 		} else {
-			return (String) mapStatusCodes.get(intKey);
+			return mapStatusCodes.get(intKey);
 		}
 	}
 
