@@ -40,14 +40,14 @@ public class MP3Converter //implements Converter
 			{
 				// inFile is not AIFF, so let's try to convert it.
 				AudioInputStream inFileAIS = AudioSystem.getAudioInputStream(inFile);
-				inFileAIS.reset(); // rewind
+				//inFileAIS.reset(); // rewind
 				if(AudioSystem.isFileTypeSupported(mp3Format.getType(), inFileAIS)) 
 				{
 					AudioSystem.write(inFileAIS, mp3Format.getType(), outFile);
-					System.out.println("Successfully made AIFF file, " + outFile.getAbsolutePath() + ", from " + inFileFormat.getType() + " file");
+					System.out.println("Successfully made " + mp3Format.getType() + " file, " + outFile.getAbsolutePath() + ", from " + inFileFormat.getType() + " file");
 					inFileAIS.close();  // All done now
 				} else { 
-					System.out.println("Warning: AIFF conversion of "  + inFileFormat.getType() + " is not currently supported by AudioSystem.");
+					System.out.println("Warning: " + mp3Format.getType() + " conversion of "  + inFileFormat.getType() + " is not currently supported by AudioSystem.");
 					return false;
 				}
 			} else {
