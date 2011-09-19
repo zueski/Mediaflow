@@ -18,16 +18,16 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 
 
-public class CownD3 implements house.neko.media.device.Device
+public class CowonD3 implements house.neko.media.device.Device
 {
 	private Log log;
 	private HierarchicalConfiguration config;
 	private Exporter exporter;
-	private File rockboxMusicFolder;
+	private File d3MusicFolder;
 	
 	private final java.util.TreeSet<String> _valid_sub_mime_types;
 	
-	public CownD3(Exporter exporter, HierarchicalConfiguration config)
+	public CowonD3(Exporter exporter, HierarchicalConfiguration config)
 	{
 		this.log = ConfigurationManager.getLog(getClass());
 		this.config = config;
@@ -35,12 +35,12 @@ public class CownD3 implements house.neko.media.device.Device
 		this._valid_sub_mime_types = new java.util.TreeSet<String>();
 		this._valid_sub_mime_types.add("mp3");
 		//this._valid_sub_mime_types.add("m4a");
-		this._valid_sub_mime_types.add("flac");
+		//this._valid_sub_mime_types.add("flac");
 		try
 		{
-			rockboxMusicFolder = new File(config.getString("MountPointMusicDir"));
+			d3MusicFolder = new File(config.getString("MountPointMusicDir"));
 		} catch(Exception e) {
-			log.error("Unable to open Rockbox location '" + rockboxMusicFolder.getAbsolutePath() + "'", e);
+			log.error("Unable to open D3 location '" + d3MusicFolder.getAbsolutePath() + "'", e);
 		}
 	}
 	
@@ -125,7 +125,7 @@ public class CownD3 implements house.neko.media.device.Device
 		throws IOException
 	{
 		if(log.isTraceEnabled()) { log.trace("Free space is " + getFreeSpace() + " before deleting all"); }
-		deleteAll(rockboxMusicFolder, true);
+		deleteAll(d3MusicFolder, true);
 		if(log.isTraceEnabled()) { log.trace("Free space is " + getFreeSpace() + " after deleting all"); }
 	}
 	
@@ -155,7 +155,7 @@ public class CownD3 implements house.neko.media.device.Device
 	public File getDeviceFile(Media m, MediaLocation l)
 		throws IOException
 	{
-		File f = new File(rockboxMusicFolder, m.getArtist());
+		File f = new File(d3MusicFolder, m.getArtist());
 		String album = m.getAlbum();
 		if(album != null)
 		{	f = new File(f, sanitizePathPart(album)); }
@@ -166,7 +166,7 @@ public class CownD3 implements house.neko.media.device.Device
 	public File getConvertedDeviceFile(Media m, MediaLocation l)
 		throws IOException
 	{
-		File f = new File(rockboxMusicFolder, m.getArtist());
+		File f = new File(d3MusicFolder, m.getArtist());
 		String album = m.getAlbum();
 		if(album != null)
 		{	f = new File(f, sanitizePathPart(album)); }
@@ -179,7 +179,7 @@ public class CownD3 implements house.neko.media.device.Device
 	
 	public long getFreeSpace()
 	{
-		long freeSpace = rockboxMusicFolder.getUsableSpace();
+		long freeSpace = d3MusicFolder.getUsableSpace();
 		if(log.isTraceEnabled()) { log.trace("Free space left on device is " + freeSpace + " bytes"); }
 		return freeSpace;
 	}
