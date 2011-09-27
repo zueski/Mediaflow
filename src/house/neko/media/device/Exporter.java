@@ -2,6 +2,7 @@ package house.neko.media.device;
 
 import house.neko.media.device.Device;
 import house.neko.media.device.RockBox;
+import house.neko.media.device.CowonD3;
 
 import house.neko.media.common.Media;
 import house.neko.media.common.MediaLocation;
@@ -20,13 +21,12 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 
 import org.apache.commons.logging.Log;
 
-
 public class Exporter
 {
 	private Log log;
 	private HierarchicalConfiguration config;
 	private MediaLibrary library;
-	private File rockboxMusicFolder;
+	private File deviceMusicFolder;
 	private Device device;
 	
 	public Exporter(MediaLibrary library, HierarchicalConfiguration config)
@@ -36,16 +36,18 @@ public class Exporter
 		this.config = config;
 		try
 		{
-			rockboxMusicFolder = new File(config.getString("MountPointMusicDir"));
-			device = new RockBox(this, config);
+			deviceMusicFolder = new File(config.getString("MountPointMusicDir"));
+			if(log.isTraceEnabled()) { log.trace("Found " + deviceMusicFolder.getAbsolutePath()); }
+			device = new CowonD3(this, config);
 		} catch(Exception e) {
-			log.error("Unable to open Rockbox location '" + rockboxMusicFolder.getAbsolutePath() + "'", e);
+			log.error("Unable to open device location '" + deviceMusicFolder.getAbsolutePath() + "'", e);
 		}
 	}
 	
 	public void syncRandom(int count)
 		throws Exception
 	{
+		if(log.isDebugEnabled()) { log.debug("Starting to sync"); }
 		Media[] m = library.getAllMedia();
 		Random r = new Random(System.currentTimeMillis());
 		if(count > m.length)
@@ -67,11 +69,13 @@ public class Exporter
 				}
 			} while(!found);
 		}
+		if(log.isDebugEnabled()) { log.debug("Done syncing"); }
 	}
 	
 	public void syncToFull()
 		throws Exception
 	{
+		if(log.isDebugEnabled()) { log.debug("Syncing to full"); }
 		Media[] m = library.getAllMedia();
 		Random r = new Random(System.currentTimeMillis());
 		int abortSyncAfterFailedCount = config.getInt("AbortSyncAfterFailedCount", 20);
@@ -133,6 +137,7 @@ public class Exporter
 				}
 			} while(!found && tryUntil-- > 0);
 		}
+		if(log.isDebugEnabled()) { log.debug("Done syncing"); }
 	}
 	
 	public void clearDevice()
