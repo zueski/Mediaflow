@@ -180,6 +180,12 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		
 		deviceMenu = new JMenu("Device");
 		
+		JMenuItem syncDeviceTrack = new JMenuItem("Sync track", 'T');
+		syncDeviceTrack.setMnemonic('R');
+		syncDeviceTrack.setAccelerator(KeyStroke.getKeyStroke('T', CONTROLCOMMAND_MASK));
+		syncDeviceTrack.addActionListener(this);
+		deviceMenu.add(syncDeviceTrack);
+		
 		JMenuItem syncDevice = new JMenuItem("Sync device", 'R');
 		syncDevice.setMnemonic('R');
 		syncDevice.setAccelerator(KeyStroke.getKeyStroke('R', CONTROLCOMMAND_MASK));
@@ -283,6 +289,16 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 			{
 				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave.Device(0)"));
 				exporter.syncToFull();
+				log.trace("Done syncing to device");
+			} catch(Exception ex) {
+				log.error("Unable to sync to device", ex);
+			}
+		} else if("Sync track".equals(e.getActionCommand())) {
+			log.warn("Syncing media to device");
+			try
+			{
+				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave.Device(0)"));
+				exporter.sync(view.getSelectedMedia());
 				log.trace("Done syncing to device");
 			} catch(Exception ex) {
 				log.error("Unable to sync to device", ex);

@@ -100,8 +100,7 @@ public class Exporter
 					MediaLocation l = m[i].getLocation();
 					if(l.getSize() != null && l.getSize() >= freeSpace)
 					{	abortCount++; continue; } // file is too big, lets try again
-					if(log.isTraceEnabled())
-					{	log.trace("Syncing track " + m[i]); }
+					if(log.isTraceEnabled()) { log.trace("Syncing track " + m[i]); }
 					File copiedFile = device.copyTo(m[i]);
 					if(copiedFile != null)
 					{
@@ -117,8 +116,7 @@ public class Exporter
 				} else {
 					if(missedcount++ > 300)
 					{
-						if(log.isTraceEnabled())
-						{	log.trace("Compacting list, to many misses"); }
+						if(log.isTraceEnabled()) { log.trace("Compacting list, to many misses"); }
 						Vector<Media> templist = new Vector<Media>(m.length);
 						for(Media tmpmedia : m)
 						{
@@ -127,8 +125,7 @@ public class Exporter
 						}
 						if(templist.size() < 1)
 						{	// exit, no more valid tracks left
-							if(log.isTraceEnabled())
-							{	log.trace("No valid tracks left, stopping sync"); }
+							if(log.isTraceEnabled()) { log.trace("No valid tracks left, stopping sync"); }
 							break SYNCLOOP;
 						}
 						m = templist.toArray(new Media[templist.size()]);
@@ -140,11 +137,26 @@ public class Exporter
 		if(log.isDebugEnabled()) { log.debug("Done syncing"); }
 	}
 	
+	public void sync(Media[] m)
+		throws Exception
+	{
+		if(log.isTraceEnabled()) { log.trace("Starting to sync tracks"); }
+		if(m == null)
+		{	return; }
+		for(Media t : m)
+		{
+			if(log.isTraceEnabled()) { log.trace("Sync track: " + m); }
+			device.copyTo(t); 
+		}
+	}
+	
 	public void clearDevice()
 	{
 		try
 		{
+			if(log.isTraceEnabled()) { log.trace("Clearing device"); }
 			device.deleteAll();
+			if(log.isTraceEnabled()) { log.trace("Cleared device"); }
 		} catch(IOException ioe) {
 			log.error("Unable to clear device " + device, ioe);
 		}

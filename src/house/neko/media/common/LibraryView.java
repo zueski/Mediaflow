@@ -11,4 +11,6 @@ public interface LibraryView
 	 * @param r
 	 */
 	public void setResult(LibrarySearchResult r);
+	
+	public Media[] getSelectedMedia();
 }

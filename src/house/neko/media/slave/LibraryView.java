@@ -288,6 +288,20 @@ public class LibraryView extends JScrollPane
 		d.setVisible(true);
 	}
 	
+	public Media[] getSelectedMedia()
+	{
+		int selectedRow = table.getSelectedRow();
+		if(selectedRow < 0)
+		{
+			if(log.isTraceEnabled())
+			{	log.trace("Skipping syncing for selected, nothing selected?!"); }
+			return null; 
+		}
+		Media[] m = new Media[1];
+		m[0] = (Media) result.results[tableSorter.modelIndex(selectedRow)][2];
+		return m;
+	}
+	
 	public static class LibraryMouseListener extends MouseAdapter
 	{
 		private LibraryView view;
