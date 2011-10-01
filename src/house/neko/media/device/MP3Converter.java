@@ -16,19 +16,32 @@ public class MP3Converter //implements Converter
 {
 	static private javax.sound.sampled.AudioFileFormat.Type type = javazoom.spi.mpeg.sampled.file.MpegFileFormatType.MP3;
 	static private javax.sound.sampled.AudioFormat audioFormat = null;
-	static private int nLengthInFrames = 0;
-	static private int nLengthInBytes = 0;
-	static private java.util.Map properties = null;
+	static private int nLengthInFrames = AudioSystem.NOT_SPECIFIED;
+	static private int nLengthInBytes = AudioSystem.NOT_SPECIFIED;
 	
-	static private void setupDefaults()
+	static private java.util.Map setupDefaults(Media m)
 	{
+		java.util.Map<String, Object> p = new java.util.concurrent.ConcurrentHashMap<String, Object>();
+		String name = m.getName();
+		if(name != null)
+		{	p.put("title", name); }
+		String artist = m.getArtist();
+		if(artist != null)
+		{	p.put("author", artist); }
+		String album = m.getAlbum();
+		if(album != null)
+		{	p.put("album", album); }
 		
-		properties = new java.util.concurrent.ConcurrentHashMap();
+		p.put("mp3.vbr", "true");
+		p.put("mp3.channels", 2);
+		p.put("mp3.frequency.hz", 44100);
+		p.put("mp3.vbr.scale", 8);
+		p.put("mp3.mode", 1);
+		return p;
 	}
 	
 	static public boolean writeToFile(Media m, MediaLocation l, File outFile) 
 	{
-		setupDefaults();
 		AudioInputStream inFileAIS = null;
 		try 
 		{
@@ -36,6 +49,7 @@ public class MP3Converter //implements Converter
 			// query file type
 			AudioFileFormat inFileFormat = AudioSystem.getAudioFileFormat(inFile);
 			inFile.reset(); // rewind
+			java.util.Map properties = setupDefaults(m);
 			AudioFileFormat mp3Format = new javazoom.spi.mpeg.sampled.file.MpegAudioFileFormat(type, audioFormat, nLengthInFrames, nLengthInBytes, properties);
 			if(inFileFormat.getType() != mp3Format.getType()) 
 			{
@@ -76,7 +90,6 @@ public class MP3Converter //implements Converter
 	
 	static public AudioInputStream getInputStream(Media m, MediaLocation l) 
 	{
-		setupDefaults();
 		AudioInputStream inFileAIS = null;
 		try 
 		{
@@ -84,6 +97,7 @@ public class MP3Converter //implements Converter
 			// query file type
 			AudioFileFormat inFileFormat = AudioSystem.getAudioFileFormat(inFile);
 			inFile.reset(); // rewind
+			java.util.Map properties = setupDefaults(m);
 			AudioFileFormat mp3Format = new javazoom.spi.mpeg.sampled.file.MpegAudioFileFormat(type, audioFormat, nLengthInFrames, nLengthInBytes, properties);
 			if(inFileFormat.getType() != mp3Format.getType()) 
 			{
@@ -115,18 +129,5 @@ public class MP3Converter //implements Converter
 	
 	static private AudioInputStream getStreamAsPCM(AudioInputStream is)
 		throws IllegalArgumentException
-	{	return AudioSystem.getAudioInputStream(AudioFormat.Encoding.PCM_SIGNED, is); }
-	
-	static public void main(String[] args)
-		throws Exception
-	{
-		Media m = new Media();
-		MediaLocation l = new MediaLocation();
-		l.setLocationURLString("file:/home/music/songs/Belle%20_%20Sebastian/The%20Boy%20with%20the%20Arab%20Strap/Ease%20Your%20Feet%20In%20The%20Sea.flac");
-		m.setLocalLocation(l);
-		File out = new File("test.mp3");
-		System.out.println("Writing out to " + out.getAbsolutePath());
-		writeToFile(m, l, out);
-		
-	}
+	{	return AudioSystem.getAudioInputStream(AudioFormat.Encoding.PCM_SIGNED , is); }
 }

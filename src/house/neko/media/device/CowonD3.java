@@ -46,6 +46,9 @@ public class CowonD3 implements house.neko.media.device.Device
 	
 	public File copyTo(Media m)
 		throws IOException
+	{	return copyTo(m, false); }
+	public File copyTo(Media m, boolean shouldOverwrite)
+		throws IOException
 	{
 		MediaLocation l = m.getLocation();
 		if(l == null)
@@ -71,7 +74,7 @@ public class CowonD3 implements house.neko.media.device.Device
 			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', cannot exist!"); }
 			return null;
 		}
-		if(df.exists())
+		if(!shouldOverwrite && df.exists())
 		{
 			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', already exists!"); }
 			return null;

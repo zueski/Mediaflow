@@ -8,6 +8,8 @@ import java.io.IOException;
 
 public interface Device
 {
+	public File copyTo(Media m, boolean overWriteExisting) throws Exception;
+	
 	public File copyTo(Media m) throws Exception;
 	
 	public File getDeviceFile(Media m, MediaLocation l) throws IOException;
