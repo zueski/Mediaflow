@@ -40,26 +40,22 @@ public class ConfigurationManager
         log = logfactory.getLog(ConfigurationManager.class);
 		if(config == null)
 		{
-			if(log.isTraceEnabled())
-			{	log.trace("Initializing configuration"); }
+			if(log.isTraceEnabled()) { log.trace("Initializing configuration"); }
 			//config = new CombinedConfiguration(); 
 			try
 			{
 				xmlfile = new java.io.File("MediaFlowSettings.xml");
-				if(log.isTraceEnabled())
-				{	log.trace("Loading settings from " + xmlfile.getAbsolutePath()); }
+				if(log.isTraceEnabled()) { log.trace("Loading settings from " + xmlfile.getAbsolutePath()); }
 				config = new XMLConfiguration(xmlfile);
 				if(config.isEmpty())
 				{	config.setRootElementName("MediaFlowSettings"); }
 				//((CombinedConfiguration) config).addConfiguration(xmlconfig);
-				if(log.isTraceEnabled())
-				{	log.trace("Version " + config.getString("Version")); }
+				if(log.isTraceEnabled()) { log.trace("Version " + config.getString("Version")); }
 			} catch(ConfigurationException ce) {
 				log.error("Error loading config file", ce); 
 			}
 			//((CombinedConfiguration) config).addConfiguration(new SystemConfiguration());
-			if(log.isTraceEnabled())
-			{	log.trace("Initialized configuration ->" + config.getRootNode()); }
+			if(log.isTraceEnabled()) { log.trace("Initialized configuration ->" + config.getRootNode()); }
 		} else {
 			log.warn("Configuration already initialized");
 		}
@@ -69,11 +65,29 @@ public class ConfigurationManager
 	{
 		try
 		{
-			log.trace("Saving settings to " + xmlfile.getAbsolutePath());
+			if(log.isTraceEnabled()) { log.trace("Saving settings to " + xmlfile.getAbsolutePath()); }
 			config.save();
-			log.trace("Finished saving settings to " + xmlfile.getAbsolutePath());
+			if(log.isTraceEnabled()) { log.trace("Finished saving settings to " + xmlfile.getAbsolutePath()); }
 		} catch(ConfigurationException ce) {
 			log.error("Error saving configuration", ce); 
+		}
+	}
+	
+	public static void dumpConfig(HierarchicalConfiguration c)
+	{
+		if(!log.isTraceEnabled())
+		{	return; }
+		if(c == null)
+		{
+			log.trace("config is null");
+		} else {
+			log.trace("dumping config");
+		}
+		java.util.Iterator<String> i = c.getKeys();
+		while(i.hasNext())
+		{
+			String k = i.next();
+			log.trace(k + " -> '" + c.getString(k) + "'");
 		}
 	}
 	

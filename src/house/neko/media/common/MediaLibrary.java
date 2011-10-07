@@ -39,7 +39,7 @@ public class MediaLibrary
 		datastores = new Vector<DataStore>();
 		int maxIndex = config.getMaxIndex("DataStore");
 		if(log.isDebugEnabled())
-		{	log.debug("Found " + maxIndex + " DataStore(s)"); }
+		{	log.debug("Found " + (maxIndex + 1) + " DataStore(s)"); }
 		// load the data stores
 		Thread[] startDataStores = new Thread[maxIndex+1];
 		for(int j = 0; j < startDataStores.length; j++)

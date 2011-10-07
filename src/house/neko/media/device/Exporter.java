@@ -33,12 +33,13 @@ public class Exporter
 	{
 		this.log = ConfigurationManager.getLog(getClass());
 		this.library = library;
-		this.config = config;
+		this.config = config.configurationAt("RockBox(0)");
+		//ConfigurationManager.dumpConfig(this.config);
 		try
 		{
-			deviceMusicFolder = new File(config.getString("MountPointMusicDir"));
+			deviceMusicFolder = new File(this.config.getString("MountPointMusicDir"));
 			if(log.isTraceEnabled()) { log.trace("Found " + deviceMusicFolder.getAbsolutePath()); }
-			device = new CowonD3(this, config);
+			device = new CowonD3(this, this.config);
 		} catch(Exception e) {
 			log.error("Unable to open device location '" + deviceMusicFolder.getAbsolutePath() + "'", e);
 		}

@@ -32,12 +32,16 @@ public class CowonD3 implements house.neko.media.device.Device
 		this.log = ConfigurationManager.getLog(getClass());
 		this.config = config;
 		this.exporter = exporter;
+		
+		if(log.isTraceEnabled()) { log.trace("CowonD3 starting up!"); }
+		
 		this._valid_sub_mime_types = new java.util.TreeSet<String>();
-		this._valid_sub_mime_types.add("mp3");
+		this._valid_sub_mime_types.add("mpeg");
 		//this._valid_sub_mime_types.add("m4a");
-		//this._valid_sub_mime_types.add("flac");
+		this._valid_sub_mime_types.add("flac");
 		try
 		{
+			//ConfigurationManager.dumpConfig(config);
 			d3MusicFolder = new File(config.getString("MountPointMusicDir"));
 		} catch(Exception e) {
 			log.error("Unable to open D3 location '" + d3MusicFolder.getAbsolutePath() + "'", e);
@@ -65,6 +69,11 @@ public class CowonD3 implements house.neko.media.device.Device
 			return null;
 		}
 		boolean convert = !_valid_sub_mime_types.contains(mimeType.getMimeSubType());
+		if(convert)
+		{
+			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', cannot convert " + mimeType.getMimeSubType() +"!"); }
+			return null;
+		}
 		File df = convert ? getDeviceFile(m, l) : getConvertedDeviceFile(m, l);
 		if(df == null)
 		{
@@ -155,8 +164,8 @@ public class CowonD3 implements house.neko.media.device.Device
 	public File getDeviceFile(Media m, MediaLocation l)
 		throws IOException
 	{
-		File f = new File(d3MusicFolder, m.getArtist());
-		String album = m.getAlbum();
+		File f = new File(d3MusicFolder, sanitizePathPart(m.getArtist()));
+		String album = sanitizePathPart(m.getAlbum());
 		if(album != null)
 		{	f = new File(f, sanitizePathPart(album)); }
 		f = new File(f, sanitizePathPart(m.getName()) + "." + l.getMimeType().getFileExtension());
@@ -166,8 +175,8 @@ public class CowonD3 implements house.neko.media.device.Device
 	public File getConvertedDeviceFile(Media m, MediaLocation l)
 		throws IOException
 	{
-		File f = new File(d3MusicFolder, m.getArtist());
-		String album = m.getAlbum();
+		File f = new File(d3MusicFolder, sanitizePathPart(m.getArtist()));
+		String album = sanitizePathPart(m.getAlbum());
 		if(album != null)
 		{	f = new File(f, sanitizePathPart(album)); }
 		f = new File(f, sanitizePathPart(m.getName()) + "." + l.getMimeType().getFileExtension());

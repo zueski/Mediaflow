@@ -205,7 +205,9 @@
 	<target name="putmaster" depends="distmaster">
 		<copy file="${masterwarname}" todir="/Users/andy/Code/apache-tomcat-6.0.18/webapps"/>
 	</target>
-	
+	<target name="sendslave" depends="distslave">
+		<copy file="${slavejarname}" todir="/home/andy/usr/MediaFlow"/>
+	</target>
 	
 	<!-- Docs -->
 	<target name="javadoc">
