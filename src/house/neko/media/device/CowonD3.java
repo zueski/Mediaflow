@@ -36,7 +36,7 @@ public class CowonD3 implements house.neko.media.device.Device
 		if(log.isTraceEnabled()) { log.trace("CowonD3 starting up!"); }
 		
 		this._valid_sub_mime_types = new java.util.TreeSet<String>();
-		this._valid_sub_mime_types.add("mpeg");
+		this._valid_sub_mime_types.add("mp3");
 		//this._valid_sub_mime_types.add("m4a");
 		this._valid_sub_mime_types.add("flac");
 		try
@@ -65,7 +65,7 @@ public class CowonD3 implements house.neko.media.device.Device
 		}
 		if(!"audio".equalsIgnoreCase(mimeType.getMimeType()))
 		{
-			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', mime not audio!"); }
+			if(log.isTraceEnabled()) { log.trace("Skipping '" + m + "', " + mimeType + " not audio!"); }
 			return null;
 		}
 		boolean convert = !_valid_sub_mime_types.contains(mimeType.getMimeSubType());

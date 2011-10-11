@@ -92,14 +92,14 @@ public class Exporter
 			boolean found = false;
 			if(lastChecked++ > 50)
 			{	freeSpace = device.getAvailableSpaceForTracks(); lastChecked = 0; }
-			int tryUntil = 1000;  // we should give up at somepoint, this problem should be made more correct later
+			int tryUntil = 10000;  // we should give up at somepoint, this problem should be made more correct later
 			do
 			{
 				i = r.nextInt(m.length);
 				if(m[i] != null)
 				{
 					MediaLocation l = m[i].getLocation();
-					if(l.getSize() != null && l.getSize() >= freeSpace)
+					if(l == null || (l.getSize() != null && l.getSize() >= freeSpace))
 					{	abortCount++; continue; } // file is too big, lets try again
 					if(log.isTraceEnabled()) { log.trace("Syncing track " + m[i]); }
 					File copiedFile = device.copyTo(m[i]);
@@ -110,12 +110,12 @@ public class Exporter
 						if(abortCount > 0 && ++abortRecoverCount > abortSyncAfterFailedCount)
 						{	abortCount = abortRecoverCount = 0; }
 					} else {
-						abortCount++; 
+						//abortCount++; 
 					}
 					m[i] = null;
 					found = true;
 				} else {
-					if(missedcount++ > 300)
+					if(missedcount++ > 500)
 					{
 						if(log.isTraceEnabled()) { log.trace("Compacting list, to many misses"); }
 						Vector<Media> templist = new Vector<Media>(m.length);
