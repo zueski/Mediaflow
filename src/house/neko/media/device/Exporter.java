@@ -78,62 +78,27 @@ public class Exporter
 	{
 		if(log.isDebugEnabled()) { log.debug("Syncing to full"); }
 		Media[] m = library.getAllMedia();
-		Random r = new Random(System.currentTimeMillis());
-		int abortSyncAfterFailedCount = config.getInt("AbortSyncAfterFailedCount", 20);
-		int abortCount = 0;
-		int abortRecoverCount = 0;
+		shuffle(m);
+		if(m == null)
+		{	return; }
 		int songsSyncd = 0;
-		int i = 0;
 		int lastChecked = 0;
-		int missedcount = 0;
 		long freeSpace = device.getAvailableSpaceForTracks();
-		SYNCLOOP:while(abortSyncAfterFailedCount > abortCount)
+		SYNCLOOP:for(int i = 0; i < m.length; i++)
 		{
 			boolean found = false;
-			if(lastChecked++ > 50)
-			{	freeSpace = device.getAvailableSpaceForTracks(); lastChecked = 0; }
-			int tryUntil = 10000;  // we should give up at somepoint, this problem should be made more correct later
-			do
+			MediaLocation l = m[i].getLocation();
+			if(l == null || (l.getSize() != null && l.getSize() >= freeSpace))
+			{	continue; } // file is too big, lets try again
+			if(log.isTraceEnabled()) { log.trace("Syncing track " + m[i]); }
+			File copiedFile = device.copyTo(m[i]);
+			if(copiedFile != null)
 			{
-				i = r.nextInt(m.length);
-				if(m[i] != null)
-				{
-					MediaLocation l = m[i].getLocation();
-					if(l == null || (l.getSize() != null && l.getSize() >= freeSpace))
-					{	abortCount++; continue; } // file is too big, lets try again
-					if(log.isTraceEnabled()) { log.trace("Syncing track " + m[i]); }
-					File copiedFile = device.copyTo(m[i]);
-					if(copiedFile != null)
-					{
-						freeSpace -= copiedFile.length(); 
-						songsSyncd++;
-						if(abortCount > 0 && ++abortRecoverCount > abortSyncAfterFailedCount)
-						{	abortCount = abortRecoverCount = 0; }
-					} else {
-						//abortCount++; 
-					}
-					m[i] = null;
-					found = true;
-				} else {
-					if(missedcount++ > 500)
-					{
-						if(log.isTraceEnabled()) { log.trace("Compacting list, to many misses"); }
-						Vector<Media> templist = new Vector<Media>(m.length);
-						for(Media tmpmedia : m)
-						{
-							if(tmpmedia != null)
-							{	templist.add(tmpmedia); }
-						}
-						if(templist.size() < 1)
-						{	// exit, no more valid tracks left
-							if(log.isTraceEnabled()) { log.trace("No valid tracks left, stopping sync"); }
-							break SYNCLOOP;
-						}
-						m = templist.toArray(new Media[templist.size()]);
-						missedcount = 0;
-					}
-				}
-			} while(!found && tryUntil-- > 0);
+				freeSpace -= copiedFile.length(); 
+				songsSyncd++;
+				
+			}
+			found = true;
 		}
 		if(log.isDebugEnabled()) { log.debug("Done syncing"); }
 	}
@@ -160,6 +125,21 @@ public class Exporter
 			if(log.isTraceEnabled()) { log.trace("Cleared device"); }
 		} catch(IOException ioe) {
 			log.error("Unable to clear device " + device, ioe);
+		}
+	}
+	
+	private void shuffle(Media[] m)
+	{
+		if(m == null)
+		{	return; }
+		Random r = new Random(System.currentTimeMillis());
+		Media t;
+		for(int i = 0; i< m.length; i++)
+		{
+			int j = r.nextInt(m.length);
+			t = m[j];
+			m[j] = m[i];
+			m[i] = t;
 		}
 	}
 }
