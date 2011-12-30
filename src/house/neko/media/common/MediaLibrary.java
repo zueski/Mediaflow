@@ -124,16 +124,22 @@ public class MediaLibrary
 		if(log.isDebugEnabled())
 		{	log.debug("Saving library"); }
 		java.util.Iterator<Media> i = cache.values().iterator();
+		int updatedCount = 0;
 		while(i.hasNext())
 		{
 			Media m = i.next();
 			if(m.getID() == null)
 			{	m.setID(m.generateID()); }
 			if(m.isDirty())
-			{	primaryStore.putMedia(m); }
+			{
+				if(log.isTraceEnabled())
+				{	log.trace("Putting dirty track " + m); }
+				primaryStore.putMedia(m);
+				updatedCount++;
+			}
 		}
 		if(log.isDebugEnabled())
-		{	log.debug("Done saving library"); }
+		{	log.debug("Done saving " + updatedCount + " to library"); }
 	}
 	
 	public boolean isDirty()

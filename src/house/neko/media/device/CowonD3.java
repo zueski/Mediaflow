@@ -93,7 +93,8 @@ public class CowonD3 implements house.neko.media.device.Device
 		if(convert)
 		{
 			if(log.isTraceEnabled()) { log.trace("Need to convert mime type " + mimeType.getMimeSubType() + " for '" + m + "'"); }
-			is = MP3Converter.getInputStream(m, l);
+			FlacConverter converter = new FlacConverter();
+			is = converter.getInputStream(m, l);
 			if(is == null)
 			{
 				log.error("Unable to convert input stream for " + m);

@@ -371,58 +371,59 @@ public class DatabaseDataStore implements DataStore
 	{
 		if(m.isContentDirty())
 		{	// avoid most db calls
-			PreparedStatement s = c.prepareStatement("select location_type,location_url,mime_id,track_id,location_size from media_track_location where track_id=?", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-			s.setLong(1, getLocalID(m, c));
-			ResultSet rs = s.executeQuery();
+			PreparedStatement s = c.prepareStatement("update media_track_location set location_url=?,mime_id=?,location_size=? where track_id=? and location_type=?");
 			boolean updateLocal = m.getLocalLocation() != null;
 			boolean updateRemote = m.getRemoteLocation() != null;
-			while(rs.next())
+			if(updateLocal)
 			{
-				String location_type = rs.getString(1);
-				if(URL_LOCATION_TYPE_LOCAL.equals(location_type))
+				MimeType mt = m.getLocalLocation().getMimeType();
+				if(mt == null)
+				{	mt = getMimeTypeByFileExtension(m.getLocalLocation().getLocationURLString()); }
+				if(log.isTraceEnabled())
+				{	log.trace("Updating local location to " + mt + " with URL " + m.getLocalLocation().getLocationURLString()); }
+				s.setString(1, m.getLocalLocation().getLocationURLString());
+				if(mt == null || mt.getLocalID() == null)
 				{
-					// TODO: fix this bug
-					MimeType mt = m.getLocalLocation().getMimeType();
-					if(mt == null)
-					{	mt = getMimeTypeByFileExtension(m.getLocalLocation().getLocationURLString()); }
-					if(log.isTraceEnabled())
-					{	log.trace("Updating local location to " + mt + " with URL " + m.getLocalLocation().getLocationURLString()); }
-					rs.updateString(2, m.getLocalLocation().getLocationURLString());
-					if(mt == null || mt.getLocalID() == null)
-					{
-						rs.updateNull(3);
-					} else {
-						rs.updateInt(3, mt.getLocalID());
-					}
-					if(m.getLocalLocation().getSize() != null)
-					{
-						rs.updateLong(4, m.getLocalLocation().getSize());
-					} else {
-						rs.updateNull(4);
-					}
-					updateLocal = false;
-				} else if(URL_LOCATION_TYPE_REMOTE.equals(location_type)) {
-					// TODO: fix this bug
-					MimeType mt = m.getLocalLocation().getMimeType();
-					if(mt == null)
-					{	mt = getMimeTypeByFileExtension(m.getRemoteLocation().getLocationURLString()); }
-					rs.updateString(2, m.getRemoteLocation().getLocationURLString());
-					if(mt == null || mt.getLocalID() == null)
-					{
-						rs.updateNull(3);	
-					} else {
-						rs.updateInt(3, mt.getLocalID());
-					}
-					if(m.getRemoteLocation().getSize() != null)
-					{
-						rs.updateLong(4, m.getRemoteLocation().getSize());
-					} else {
-						rs.updateNull(4);
-					}
-					updateLocal = false;
+					s.setNull(2, Types.INTEGER);
+				} else {
+					s.setInt(2, mt.getLocalID());
 				}
+				if(m.getLocalLocation().getSize() != null)
+				{
+					s.setLong(3, m.getLocalLocation().getSize());
+				} else {
+					s.setNull(3, Types.BIGINT);
+				}
+				s.setLong(4, m.getLocalID());
+				s.setString(5, URL_LOCATION_TYPE_LOCAL);
+				s.executeUpdate();
+				updateLocal = false;
+			} 
+			if(updateRemote)
+			{
+				MimeType mt = m.getRemoteLocation().getMimeType();
+				if(mt == null)
+				{	mt = getMimeTypeByFileExtension(m.getRemoteLocation().getLocationURLString()); }
+				if(log.isTraceEnabled())
+				{	log.trace("Updating remote location to " + mt + " with URL " + m.getRemoteLocation().getLocationURLString()); }
+				s.setString(1, m.getRemoteLocation().getLocationURLString());
+				if(mt == null || mt.getLocalID() == null)
+				{
+					s.setNull(2, Types.INTEGER);
+				} else {
+					s.setInt(2, mt.getLocalID());
+				}
+				if(m.getRemoteLocation().getSize() != null)
+				{
+					s.setLong(3, m.getRemoteLocation().getSize());
+				} else {
+					s.setNull(3, Types.BIGINT);
+				}
+				s.setLong(4, m.getLocalID());
+				s.setString(5, URL_LOCATION_TYPE_REMOTE);
+				s.executeUpdate();
+				updateRemote = false;
 			}
-			rs.close();
 			s.close();
 			if(updateLocal || updateRemote)
 			{
