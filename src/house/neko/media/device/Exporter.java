@@ -112,7 +112,7 @@ public class Exporter
 		for(Media t : m)
 		{
 			if(log.isTraceEnabled()) { log.trace("Sync track: " + m); }
-			device.copyTo(t); 
+			device.copyTo(t, true); 
 		}
 	}
 	

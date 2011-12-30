@@ -2,6 +2,7 @@ package house.neko.media.slave;
 
 import house.neko.media.common.Media;
 import house.neko.media.common.MediaLibrary;
+import house.neko.media.common.MediaConverter;
 import house.neko.media.common.MediaPlayer;
 import house.neko.media.common.ConfigurationManager;
 
@@ -56,6 +57,7 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 	private JMenuBar menubar;
 	private JMenu fileMenu;
 	private JMenu trackMenu;
+	private JMenu convertMenu;
 	private JMenu deviceMenu;
 
 	private boolean isMac = false;
@@ -178,6 +180,15 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		
 		menubar.add(trackMenu);
 		
+		convertMenu = new JMenu("Convert");
+		
+		JMenuItem convertALACToFlac = new JMenuItem("Convert ALAC track to FLAC", 'L');
+		convertALACToFlac.setMnemonic('R');
+		convertALACToFlac.addActionListener(this);
+		convertMenu.add(convertALACToFlac);
+		
+		menubar.add(convertMenu);
+		
 		deviceMenu = new JMenu("Device");
 		
 		JMenuItem syncDeviceTrack = new JMenuItem("Sync track", 'T');
@@ -249,95 +260,109 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 	{
 		if(log.isDebugEnabled())
 		{	log.debug("Action " + e.getActionCommand()); }
-		if("Import iTunes library".equals(e.getActionCommand()))
+		switch(e.getActionCommand())
 		{
-			JFileChooser fc = new JFileChooser();
-			String lastFile = config.getString("iTunes.lastImported");
-			if(lastFile != null && lastFile.length() > 3)
-			{	try { fc.setSelectedFile(new File(lastFile)); } finally { } }
-			int returnVal = fc.showOpenDialog(this);
-			if (returnVal == JFileChooser.APPROVE_OPTION) 
-			{
-				File file = fc.getSelectedFile();
+			case "Import iTunes library":
+				JFileChooser fc = new JFileChooser();
+				String lastFile = config.getString("iTunes.lastImported");
+				if(lastFile != null && lastFile.length() > 3)
+				{	try { fc.setSelectedFile(new File(lastFile)); } finally { } }
+				int returnVal = fc.showOpenDialog(this);
+				if (returnVal == JFileChooser.APPROVE_OPTION) 
+				{
+					File file = fc.getSelectedFile();
+					try
+					{
+						//This is where a real application would open the file.
+						log.trace("importing iTunes libary: " + file.getAbsolutePath());
+						ITunesMediaLibraryXMLFile importer = new ITunesMediaLibraryXMLFile(library);
+						importer.parseInputStream(new FileInputStream(file));
+						config.setProperty("iTunes.lastImported", file.getAbsolutePath());
+					} catch(Exception ex) {
+						log.error("Unable to import file " + file.getAbsolutePath(), ex); 
+					}
+				} else {
+					log.trace("Open command cancelled by user.");
+				}
+				break;
+			case "Import from CD":
+				SlaveCDImporter scdi = new SlaveCDImporter(library);
+				scdi.importCD();
+				break;
+			case "Save Library":
+				library.saveAllDirty();
+				break;
+			case "Dump library":
+				log.fatal("Dumping library to stdout!");
+				library.dump();
+				break;
+			case "Convert ALAC track to FLAC":
+				log.trace("Convert ALAC track to FLAC");
+				MediaConverter converter = new MediaConverter(library);
+				converter.convertToFLAC(view.getSelectedMedia());
+				break;
+			case "Get track info":
+				log.trace("Getting track info for selected track");
+				view.openInfoForSelected();
+				break;
+			case "Sync device":
+				log.warn("Syncing to device");
 				try
 				{
-					//This is where a real application would open the file.
-					log.trace("importing iTunes libary: " + file.getAbsolutePath());
-					ITunesMediaLibraryXMLFile importer = new ITunesMediaLibraryXMLFile(library);
-					importer.parseInputStream(new FileInputStream(file));
-					config.setProperty("iTunes.lastImported", file.getAbsolutePath());
+					Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave.Device(0)"));
+					exporter.syncToFull();
+					log.trace("Done syncing to device");
 				} catch(Exception ex) {
-					log.error("Unable to import file " + file.getAbsolutePath(), ex); 
+					log.error("Unable to sync to device", ex);
 				}
-			} else {
-				log.trace("Open command cancelled by user.");
-			}
-		} else if("Import from CD".equals(e.getActionCommand())) {
-			SlaveCDImporter scdi = new SlaveCDImporter(library);
-			scdi.importCD();
-		} else if("Save Library".equals(e.getActionCommand())) {
-			library.saveAllDirty();
-		} else if("Dump library".equals(e.getActionCommand())) {
-			log.fatal("Dumping library to stdout!");
-			library.dump();
-		} else if("Get track info".equals(e.getActionCommand())) {
-			log.trace("Getting track info for selected track");
-			view.openInfoForSelected();
-		} else if("Sync device".equals(e.getActionCommand())) {
-			log.warn("Syncing to device");
-			try
-			{
-				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave.Device(0)"));
-				exporter.syncToFull();
-				log.trace("Done syncing to device");
-			} catch(Exception ex) {
-				log.error("Unable to sync to device", ex);
-			}
-		} else if("Sync track".equals(e.getActionCommand())) {
-			log.warn("Syncing media to device");
-			try
-			{
-				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave.Device(0)"));
-				exporter.sync(view.getSelectedMedia());
-				log.trace("Done syncing to device");
-			} catch(Exception ex) {
-				log.error("Unable to sync to device", ex);
-			}
-		} else if("Sync device 100 Random".equals(e.getActionCommand())) {
-			log.warn("Syncing random 100 to device");
-			try
-			{
-				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
-				exporter.syncRandom(1000);
-				log.trace("Done syncing random to device");
-			} catch(Exception ex) {
-				log.error("Unable to sync to device", ex);
-			}
-		} else if("Clear device".equals(e.getActionCommand())) {
-			log.trace("Purging device");
-			try
-			{
-				Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
-				exporter.clearDevice();
-				log.trace("Done purging to device");
-			} catch(Exception ex) {
-				log.error("Unable to sync to device", ex);
-			}
-		} else if("Quit".equals(e.getActionCommand())) {
-			if(log.isDebugEnabled())
-			{	log.debug("Quitting from menu, saving settings and library"); }
-			if(library.isDirty())
-			{
-				int option = JOptionPane.showConfirmDialog(null, "Library has unsaved changes; should they be saved?");
-				switch(option)
+				break;
+			case "Sync track":
+				log.warn("Syncing media to device");
+				try
 				{
-					case JOptionPane.OK_OPTION: library.saveAllDirty(); break;
-					case JOptionPane.CANCEL_OPTION: return;
+					Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave.Device(0)"));
+					exporter.sync(view.getSelectedMedia());
+					log.trace("Done syncing to device");
+				} catch(Exception ex) {
+					log.error("Unable to sync to device", ex);
 				}
-			}
-			shutdown();
+				break;
+			case "Sync device 100 Random":
+				log.warn("Syncing random 100 to device");
+				try
+				{
+					Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
+					exporter.syncRandom(1000);
+					log.trace("Done syncing random to device");
+				} catch(Exception ex) {
+					log.error("Unable to sync to device", ex);
+				}
+				break;
+			case "Clear device":
+				log.trace("Purging device");
+				try
+				{
+					Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
+					exporter.clearDevice();
+					log.trace("Done purging to device");
+				} catch(Exception ex) {
+					log.error("Unable to sync to device", ex);
+				}
+				break;
+			case "Quit":
+				if(log.isDebugEnabled())
+				{	log.debug("Quitting from menu, saving settings and library"); }
+				if(library.isDirty())
+				{
+					int option = JOptionPane.showConfirmDialog(null, "Library has unsaved changes; should they be saved?");
+					switch(option)
+					{
+						case JOptionPane.OK_OPTION: library.saveAllDirty(); break;
+						case JOptionPane.CANCEL_OPTION: return;
+					}
+				}
+				shutdown();
 		}
-
 	}
 	
 	/*
