@@ -36,7 +36,7 @@ public class CowonD3 implements house.neko.media.device.Device
 		if(log.isTraceEnabled()) { log.trace("CowonD3 starting up!"); }
 		
 		this._valid_sub_mime_types = new java.util.TreeSet<String>();
-		this._valid_sub_mime_types.add("mp3");
+		this._valid_sub_mime_types.add("mpeg");
 		//this._valid_sub_mime_types.add("m4a");
 		this._valid_sub_mime_types.add("flac");
 		try
@@ -102,13 +102,14 @@ public class CowonD3 implements house.neko.media.device.Device
 		if(convert)
 		{
 			if(log.isTraceEnabled()) { log.trace("Need to convert mime type " + mimeType.getMimeSubType() + " for '" + m + "'"); }
-			FlacConverter converter = new FlacConverter();
+			/*FlacConverter converter = new FlacConverter();
 			is = converter.getInputStream(m, l);
 			if(is == null)
 			{
 				log.error("Unable to convert input stream for " + m);
 				return null;
-			}
+			}*/
+			return null;
 		} else {
 			try
 			{

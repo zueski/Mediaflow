@@ -320,6 +320,7 @@ public class DatabaseDataStore implements DataStore
 				if(m.isContentDirty())
 				{	updateLocation(m, _conn); }
 				_conn.commit();
+				m.resetDirty();
 				if(log.isTraceEnabled())
 				{	log.trace("Committed " + m.getID() + " to database"); }
 			} catch(Exception e) {

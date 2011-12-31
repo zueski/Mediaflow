@@ -31,9 +31,13 @@ public class MediaConverter
 	{
 		try
 		{
+			if(l == null)
+			{	log.error("Location not set: " + m); return; }
 			File alacFile = l.getFile();
 			if(alacFile == null)
 			{	log.error("URL to FLAC not currently supported!!!!"); return; }
+			if(!alacFile.getName().endsWith(".m4a"))
+			{	log.error("Source format is not M4A (ALAC), currently unsupported configuration: " + alacFile.getName()); return; }
 			File flacFile = new File(alacFile.getParentFile(), alacFile.getName().replaceAll("^(.*)\\.m4a", "$1.flac"));
 			if(!flacFile.getName().endsWith(".flac"))
 			{	log.error("Default format is not FLAC, currently unsupported configuration: " + flacFile.getName()); return; }
@@ -65,6 +69,8 @@ public class MediaConverter
 				m.setLocalLocation(flacLocation);
 				library.saveAllDirty();
 				alacFile.delete();
+				if(log.isDebugEnabled())
+				{	log.debug("Converted " + m + " to FLAC"); }
 			} else {
 				log.error("Unable to encode file: " + alacFile.getAbsolutePath() + ", got " + encodeReturn);
 				flacFile.delete();

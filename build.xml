@@ -61,7 +61,7 @@
 		<mkdir dir="${bin}"/>
 		<mkdir dir="${build}"/>
 		<javac srcdir="${src}" destdir="${build}"
-				source="1.6" target="1.6"
+				source="1.7" target="1.7"
 				includeAntRuntime="no"
 				classpathref="lib.path" debug="${compile.debug}">
 			<compilerarg value="-Xlint"/>

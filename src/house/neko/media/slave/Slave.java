@@ -299,7 +299,7 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 			case "Convert ALAC track to FLAC":
 				log.trace("Convert ALAC track to FLAC");
 				MediaConverter converter = new MediaConverter(library);
-				converter.convertToFLAC(view.getSelectedMedia());
+				converter.convertToFLAC(library.getAllMedia());
 				break;
 			case "Get track info":
 				log.trace("Getting track info for selected track");
