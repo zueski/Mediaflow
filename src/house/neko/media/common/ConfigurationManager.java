@@ -3,6 +3,7 @@ package house.neko.media.common;
 import java.io.FileInputStream;
 import java.io.File;
 import java.util.Properties;
+import java.util.List;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -105,6 +106,17 @@ public class ConfigurationManager
 			config.setProperty(path, ""); 
 		}
 		return config.configurationAt(path, true); 
+	}
+	
+	public static List<HierarchicalConfiguration> configurationsAt(String path)
+	{
+		if(!config.containsKey(path))
+		{
+			if(log.isWarnEnabled())
+			{	log.warn("Property path '" + path + "' not found!"); }
+			config.setProperty(path, ""); 
+		}
+		return config.configurationsAt(path); 
 	}
     
 	/**

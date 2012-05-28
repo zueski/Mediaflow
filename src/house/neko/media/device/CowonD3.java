@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.Vector;
 
+import javax.swing.Action;
+
 import org.apache.commons.configuration.HierarchicalConfiguration;
 
 import org.apache.commons.logging.Log;
@@ -203,5 +205,11 @@ public class CowonD3 implements house.neko.media.device.Device
 		long freeSpace = getFreeSpace() - config.getLong("ReservedSpace", 0L);
 		if(log.isTraceEnabled()) {log.trace("Avaliable free space left on device is " + freeSpace + " bytes"); }
 		return freeSpace;
+	}
+	
+	public Action[] getActions(house.neko.media.slave.LibraryViewPane viewPane)
+	{
+		Action[] actions = new Action[0];
+		return actions;
 	}
 }

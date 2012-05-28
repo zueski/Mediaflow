@@ -15,17 +15,15 @@ import org.apache.commons.logging.Log;
  *
  * @author andy
  */
-public class MediaLibrary
+public class MediaLibrary extends java.util.Observable 
 {
 	private Log log;
 	private HierarchicalConfiguration config;
 	private Vector<DataStore> datastores;
 	private java.util.Map<String,Media> cache;
 	private DataStore primaryStore;
-	private LibraryView libraryView = null;
+	private Vector<LibraryView> libraryViews = new Vector<LibraryView>(1, 1);
 	
-	private ViewUpdater updater = null;
-
 	/**
 	 *
 	 * @param config
@@ -94,7 +92,10 @@ public class MediaLibrary
 	 * @param m
 	 */
 	public void addMedia(Media m)
-	{	add(m); }
+	{
+		add(m);
+		setChanged();
+	}
 	/**
 	 *
 	 * @param m
@@ -103,18 +104,7 @@ public class MediaLibrary
 	{
 		if(m != null)
 		{	cache.put(m.getID(), m); }
-		synchronized(this)
-		{
-			if(updater == null)
-			{
-				updater = new ViewUpdater(this);
-				updater.updateView = true;
-				updater.sleepTime = 500L;
-				updater.start();
-			} else {
-				updater.updateView = true;
-			}
-		}
+		setChanged();
 	}
 	
 	public void saveAllDirty()
@@ -129,7 +119,7 @@ public class MediaLibrary
 		{
 			Media m = i.next();
 			if(m.getID() == null)
-			{	m.setID(m.generateID()); }
+			{	m.setID(Media.generateID()); }
 			if(m.isDirty())
 			{
 				if(log.isTraceEnabled())
@@ -153,7 +143,7 @@ public class MediaLibrary
 		{
 			Media m = i.next();
 			if(m.getID() == null)
-			{	m.setID(m.generateID()); }
+			{	m.setID(Media.generateID()); }
 			if(m.isDirty())
 			{
 				if(log.isDebugEnabled())
@@ -206,7 +196,7 @@ public class MediaLibrary
 	 *
 	 * @param v
 	 */
-	public void setViewDefault(LibraryView v)
+	/*public void setViewDefault(LibraryView v)
 	{
 		if(log.isDebugEnabled())
 		{	log.debug("Setting default view"); }
@@ -226,44 +216,26 @@ public class MediaLibrary
 		v.setResult(r);
 		if(log.isDebugEnabled())
 		{	log.debug("Set default view with " + o.length + " tracks"); }
+	}*/
+	
+	public LibraryView getNewView()
+	{
+		LibraryView v = new LibraryView(this, config.configurationAt("View(0)"));
+		libraryViews.add(v);
+		addObserver(v);
+		v.clearFilter();
+		return v;
+	}
+	
+	public void forceUpdate()
+	{
+		if(log.isTraceEnabled()) { log.trace("Update forced to " + countObservers() + " observers", new Exception()); }
+		for(LibraryView v : libraryViews.toArray(new LibraryView[libraryViews.size()]))
+		{	v.clearFilter(); }
 	}
 	
 	public MimeType getMimeTypeByFileExtension(String extension)
 	{	return primaryStore.getMimeTypeByFileExtension(extension); }
-	
-	private class ViewUpdater extends Thread
-	{
-		public boolean updateView = false;
-		public long sleepTime = 1L;
-		private Object parent;
-		
-		public ViewUpdater(Object parent)
-		{	this.parent = parent; }
-		
-		@Override
-		public void run()
-		{
-			if(updateView)
-			{
-				do
-				{
-					try
-					{
-						sleep(sleepTime);
-					} catch(InterruptedException ie) {
-						log.error(ie); 
-					}
-					synchronized(parent)
-					{
-						updateView = false;
-						updater = null; 
-					}
-				} while(updateView == true);
-				log.trace("Updating view");
-				setViewDefault(libraryView); 
-			}
-		}
-	}
 	
 	public boolean isSetup()
 	{	return primaryStore != null; }

@@ -51,6 +51,7 @@ public class DatabaseDataStore implements DataStore
 	private PreparedStatement getMediaTrackByPersistantID = null;
 
 	// caches
+	private boolean _is_loaded = false;
 	private TreeMap<String,MimeType> cacheFileExtenstionMimeType = new TreeMap<String,MimeType>();
 	private TreeMap<Integer,MimeType> cacheMimeTypeID = new TreeMap<Integer,MimeType>();
 	private TreeMap<String,Integer> cacheArtistID = new TreeMap<String,Integer>();
@@ -239,6 +240,14 @@ public class DatabaseDataStore implements DataStore
 	 * @return
 	 */
 	public Media[] getAllMedia()
+	{
+		while(!_is_loaded)
+		{	try { Thread.sleep(500L); } catch(Exception ie) { } }
+		return library.getAllMedia();
+	}
+	
+	
+	public Media[] loadAllMedia()
 	{
 		if(_conn == null)
 		{	log.error("DatabaseDatastore not connected!");  return new Media[0]; }
@@ -753,7 +762,11 @@ public class DatabaseDataStore implements DataStore
 	private class DatabaseStore$LoadMedia implements Runnable
 	{
 		public void run()
-		{	getAllMedia(); }
+		{
+			loadAllMedia();
+			_is_loaded = true;
+			library.forceUpdate();
+		}
 	}
 	
 	public DataStoreConfigurationHelper getConfigurationHelper()

@@ -3,13 +3,18 @@ package house.neko.media.slave;
 import house.neko.util.TableSorter;
 import house.neko.media.common.Media;
 import house.neko.media.common.LibrarySearchResult;
+import house.neko.media.common.LibraryView;
 import house.neko.media.common.ConfigurationManager;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+
 import java.io.IOException;
 
+import javax.swing.Action;
+import javax.swing.AbstractAction;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.JScrollPane;
@@ -28,12 +33,12 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
  *
  * @author andy
  */
-public class LibraryView extends JScrollPane
-		implements TableModel, ListSelectionListener, house.neko.media.common.LibraryView
+public class LibraryViewPane extends JScrollPane implements TableModel, ListSelectionListener, java.util.Observer
 {
 	private static final long serialVersionUID = 6L;
 
 	private Slave slave;
+	private house.neko.media.common.LibraryView libraryView;
 	
 	private Log log = null;
 	private HierarchicalConfiguration config;
@@ -52,16 +57,17 @@ public class LibraryView extends JScrollPane
 	 *
 	 * @param mms
 	 */
-	public LibraryView(Slave mms, HierarchicalConfiguration config)
+	public LibraryViewPane(Slave mms, HierarchicalConfiguration config, house.neko.media.common.LibraryView libraryView)
 	{
-		this(new JTable(), mms, config);
+		this(new JTable(), mms, config, libraryView);
 	}
 
-	private LibraryView(JTable t, Slave mms, HierarchicalConfiguration config)
+	private LibraryViewPane(JTable t, Slave mms, HierarchicalConfiguration config, house.neko.media.common.LibraryView libraryView)
 	{
 		super(t);
 		slave = mms;
 		this.config = config;
+		this.libraryView = libraryView;
 		table = t;
 		
 		this.log = ConfigurationManager.getLog(getClass());
@@ -76,7 +82,7 @@ public class LibraryView extends JScrollPane
 		ListSelectionModel rowSM = table.getSelectionModel();
 		rowSM.addListSelectionListener(this);
 		
-		columnHeaders = config.getStringArray("Columns");
+		columnHeaders = libraryView.getColumnHeaders();
 		if(columnHeaders == null || columnHeaders.length < 1)
 		{
 			columnHeaders = new String[2];
@@ -92,7 +98,8 @@ public class LibraryView extends JScrollPane
 			columns[i].setIdentifier(columnHeaders[i]);
 			table.addColumn(columns[i]);
 		}
-        result = new LibrarySearchResult(columnHeaders, columnClasses, new Object[columnHeaders.length][0]);
+		result = libraryView.getVisibleMedia();
+		libraryView.addObserver(this);
 		
 		listeners = new TableModelListener[0];
 		
@@ -120,12 +127,15 @@ public class LibraryView extends JScrollPane
 	synchronized public void setResult(LibrarySearchResult r)
 	{
 		if(log.isTraceEnabled())
-		{	log.trace("Setting LibrarySearchResults!"); }
+		{	log.trace("Setting LibrarySearchResults: " + r); }
 		result = r;
 		table.tableChanged(new TableModelEvent(this, 0, result.results.length, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
 		if(log.isTraceEnabled())
 		{	log.trace("Updating results to " + r.results.length); }
 	}
+	
+	public LibraryView getView()
+	{	return libraryView; }
 
 	// TableModel
 	/**
@@ -192,9 +202,7 @@ public class LibraryView extends JScrollPane
 	 * @return
 	 */
 	public Object getValueAt(int rowIndex, int columnIndex)
-	{
-		return result.results[rowIndex][columnIndex];
-	}
+	{	return result.results[rowIndex][columnIndex]; }
 
 	// TableModel
 	/**
@@ -302,11 +310,25 @@ public class LibraryView extends JScrollPane
 		return m;
 	}
 	
+	public Action[] getActions()
+	{
+		int actionCount = 0;
+		Action[] allActions = new Action[actionCount];
+		return allActions;
+	}
+	
+	public void actionPerformed(ActionEvent e)
+	{
+		if(log.isDebugEnabled())
+		{	log.debug("Action " + e.getActionCommand()); }
+		
+	}
+	
 	public static class LibraryMouseListener extends MouseAdapter
 	{
-		private LibraryView view;
+		private LibraryViewPane view;
 		
-		public LibraryMouseListener(LibraryView view)
+		public LibraryMouseListener(LibraryViewPane view)
 		{	this.view = view; }
 		
 		public void mouseClicked(MouseEvent e)
@@ -318,5 +340,22 @@ public class LibraryView extends JScrollPane
 				view.openInfoForSelected();
 			}
 		}
+	}
+	
+	public class ChangeColumnAction extends AbstractAction
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			
+		}
+	}
+	
+	public void update(java.util.Observable o, Object arg)
+	{
+		System.out.println("LibraryViewPane was updated : " + o + " -> " + arg);
+		setResult(libraryView.getVisibleMedia());
+		//table.tableChanged(new TableModelEvent(this, 0, result.results.length, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
+		if(log.isTraceEnabled())
+		{	log.trace("Forcing update results from " + o); }
 	}
 }

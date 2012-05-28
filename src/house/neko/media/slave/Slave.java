@@ -10,6 +10,7 @@ import house.neko.media.itunes.ITunesMediaLibraryXMLFile;
 
 import house.neko.media.device.Exporter;
 
+import javax.swing.Action;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -22,6 +23,8 @@ import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.File;
 
+import java.util.List;
+
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JFileChooser;
@@ -29,6 +32,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.KeyStroke;
 
 import org.apache.commons.logging.Log;
@@ -49,7 +53,7 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 	private Log log;
 	private HierarchicalConfiguration config;
 	private MediaLibrary library;
-	private LibraryView view;
+	private LibraryViewPane view;
 	private MediaPlayer player;
 	private MediaPlayerControls controls;
 	private EventMapper eventMapper;
@@ -57,7 +61,7 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 	private JMenuBar menubar;
 	private JMenu fileMenu;
 	private JMenu trackMenu;
-	private JMenu convertMenu;
+	private JMenu viewMenu;
 	private JMenu deviceMenu;
 
 	private boolean isMac = false;
@@ -97,12 +101,10 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 			try { dialog.wait(); } catch(InterruptedException ie) { }
 		}
 		
-		view = new LibraryView(this, ConfigurationManager.getConfiguration("Slave(0).LibraryView(0)"));
+		view = new LibraryViewPane(this, ConfigurationManager.getConfiguration("Slave(0).LibraryView(0)"), library.getNewView());
 		player = new MediaPlayer();
 		controls = new MediaPlayerControls(player, eventMapper);
 		eventMapper = new EventMapper(player);
-
-		library.setViewDefault(view);
 
 		//setup graphics
 		Container c = getContentPane();
@@ -171,6 +173,16 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		
 		menubar.add(fileMenu);
 		
+		viewMenu = new JMenu("View");
+		Action[] viewActions = view.getActions();
+		for(Action a : viewActions)
+		{
+			JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a);
+			viewMenu.add(menuItem);
+		}
+		
+		menubar.add(viewMenu);
+		
 		trackMenu = new JMenu("Track");
 		JMenuItem getTrackInfo = new JMenuItem("Get track info", 'I');
 		getTrackInfo.setMnemonic('I');
@@ -178,43 +190,31 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		getTrackInfo.addActionListener(this);
 		trackMenu.add(getTrackInfo);
 		
-		menubar.add(trackMenu);
-		
-		convertMenu = new JMenu("Convert");
-		
 		JMenuItem convertALACToFlac = new JMenuItem("Convert ALAC track to FLAC", 'L');
 		convertALACToFlac.setMnemonic('R');
 		convertALACToFlac.addActionListener(this);
-		convertMenu.add(convertALACToFlac);
+		trackMenu.add(convertALACToFlac);
 		
-		menubar.add(convertMenu);
+		menubar.add(trackMenu);
 		
-		deviceMenu = new JMenu("Device");
-		
-		JMenuItem syncDeviceTrack = new JMenuItem("Sync track", 'T');
-		syncDeviceTrack.setMnemonic('R');
-		syncDeviceTrack.setAccelerator(KeyStroke.getKeyStroke('T', CONTROLCOMMAND_MASK));
-		syncDeviceTrack.addActionListener(this);
-		deviceMenu.add(syncDeviceTrack);
-		
-		JMenuItem syncDevice = new JMenuItem("Sync device", 'R');
-		syncDevice.setMnemonic('R');
-		syncDevice.setAccelerator(KeyStroke.getKeyStroke('R', CONTROLCOMMAND_MASK));
-		syncDevice.addActionListener(this);
-		deviceMenu.add(syncDevice);
-		
-		JMenuItem syncDeviceRandom = new JMenuItem("Sync device 100 Random", 'N');
-		syncDeviceRandom.setMnemonic('N');
-		syncDeviceRandom.setAccelerator(KeyStroke.getKeyStroke('R', CONTROLCOMMAND_MASK | InputEvent.SHIFT_DOWN_MASK));
-		syncDeviceRandom.addActionListener(this);
-		deviceMenu.add(syncDeviceRandom);
-		
-		JMenuItem clearDevice = new JMenuItem("Clear Device", 'P');
-		clearDevice.setMnemonic('P');
-		clearDevice.addActionListener(this);
-		deviceMenu.add(clearDevice);
-		
-		menubar.add(deviceMenu);
+		List<HierarchicalConfiguration> devices = ConfigurationManager.configurationsAt("Slave.Device");
+		if(devices != null)
+		{
+			deviceMenu = new JMenu("Device");
+			for(int i = 0; i < devices.size(); i++)
+			{
+				if(i > 0)
+				{	deviceMenu.	addSeparator(); }
+				Exporter exporter = new Exporter(library, devices.get(i));
+				Action[] actions = exporter.getActions(view);
+				for(Action a : actions)
+				{
+					JMenuItem menuItem = new JMenuItem(a);
+					deviceMenu.add(menuItem);
+				}
+			}
+			menubar.add(deviceMenu);
+		}
 		
 		setJMenuBar(menubar);
 	}
@@ -304,50 +304,6 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 			case "Get track info":
 				log.trace("Getting track info for selected track");
 				view.openInfoForSelected();
-				break;
-			case "Sync device":
-				log.warn("Syncing to device");
-				try
-				{
-					Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave.Device(0)"));
-					exporter.syncToFull();
-					log.trace("Done syncing to device");
-				} catch(Exception ex) {
-					log.error("Unable to sync to device", ex);
-				}
-				break;
-			case "Sync track":
-				log.warn("Syncing media to device");
-				try
-				{
-					Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave.Device(0)"));
-					exporter.sync(view.getSelectedMedia());
-					log.trace("Done syncing to device");
-				} catch(Exception ex) {
-					log.error("Unable to sync to device", ex);
-				}
-				break;
-			case "Sync device 100 Random":
-				log.warn("Syncing random 100 to device");
-				try
-				{
-					Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
-					exporter.syncRandom(1000);
-					log.trace("Done syncing random to device");
-				} catch(Exception ex) {
-					log.error("Unable to sync to device", ex);
-				}
-				break;
-			case "Clear device":
-				log.trace("Purging device");
-				try
-				{
-					Exporter exporter = new Exporter(library, ConfigurationManager.getConfiguration("Slave(0).Device(0)"));
-					exporter.clearDevice();
-					log.trace("Done purging to device");
-				} catch(Exception ex) {
-					log.error("Unable to sync to device", ex);
-				}
 				break;
 			case "Quit":
 				if(log.isDebugEnabled())

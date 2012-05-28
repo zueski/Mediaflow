@@ -16,7 +16,7 @@ public abstract class Queue
 	
 	public Queue(String name)
 	{
-		this.log = LogFactory.getFactory().getLog(getClass());
+		this.log = LogFactory.getLog(getClass());
 	}
 	
 	public void addTask(Callback function, Callback notify)

@@ -30,6 +30,7 @@ public abstract interface DataStore
 	 *
 	 * @return
 	 */
+	// TODO: rename this to loadAllMedia()
 	public abstract Media[] getAllMedia();
 	/**
 	 *

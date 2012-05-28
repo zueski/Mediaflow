@@ -16,7 +16,7 @@ import java.net.URISyntaxException;
  */
 public class Media implements java.io.Serializable
 {
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 	// IDs 
 	private String id;
 	private String parent_id;
@@ -510,4 +510,8 @@ public class Media implements java.io.Serializable
 	{
 		System.out.println("ID: '" + generateID() + "'");
 	}
+	
+	public static final String NAME = "Title";
+	public static final String ARTIST = "Artist";
+	public static final String ALBUM = "Album";
 }

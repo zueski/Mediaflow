@@ -32,4 +32,24 @@ public class LibrarySearchResult
 		columnNames = cn != null ? cn : new String[0];
 		columnTypes = ct != null ? ct : new Class[0];
 	}
+	
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder("LibrarySearchResult(");
+		if(results == null)
+		{
+			sb.append("null");
+		} else {
+			sb.append(Integer.toString(results.length));
+		}
+		sb.append(",");
+		if(columnNames == null)
+		{
+			sb.append("null");
+		} else {
+			sb.append(Integer.toString(columnNames.length));
+		}
+		sb.append(")");
+		return sb.toString();
+	}
 }

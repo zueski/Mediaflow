@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.Vector;
 
+import javax.swing.Action;
+
 import org.apache.commons.configuration.HierarchicalConfiguration;
 
 import org.apache.commons.logging.Log;
@@ -33,6 +35,7 @@ public class RockBox implements house.neko.media.device.Device
 		this.config = config;
 		this.exporter = exporter;
 		this._valid_sub_mime_types = new java.util.TreeSet<String>();
+		this._valid_sub_mime_types.add("mpeg");
 		this._valid_sub_mime_types.add("mp3");
 		this._valid_sub_mime_types.add("m4a");
 		this._valid_sub_mime_types.add("flac");
@@ -194,5 +197,11 @@ public class RockBox implements house.neko.media.device.Device
 		long freeSpace = getFreeSpace() - config.getLong("ReservedSpace", 0L);
 		if(log.isTraceEnabled()) {log.trace("Avaliable free space left on device is " + freeSpace + " bytes"); }
 		return freeSpace;
+	}
+	
+	public Action[] getActions(house.neko.media.slave.LibraryViewPane viewPane)
+	{
+		Action[] actions = new Action[0];
+		return actions;
 	}
 }
