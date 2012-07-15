@@ -64,7 +64,7 @@
 				source="1.7" target="1.7"
 				includeAntRuntime="no"
 				classpathref="lib.path" debug="${compile.debug}">
-			<compilerarg value="-Xlint"/>
+			<compilerarg value="-Xlint:-unchecked"/>
 		</javac>
 	</target>
 

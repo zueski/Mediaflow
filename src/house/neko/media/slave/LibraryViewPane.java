@@ -273,7 +273,7 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 		} else {
 			//selectedRow is selected
 			int selectedRow = lsm.getMinSelectionIndex();
-			Media m = (Media) result.results[tableSorter.modelIndex(selectedRow)][2];
+			Media m = (Media) result.results[tableSorter.modelIndex(selectedRow)][result.mediaIndex];
 			if(log.isTraceEnabled())
 			{	log.trace("Selection changed to row " + selectedRow + ", is " + m); }
 			slave.play(m);
@@ -289,7 +289,7 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 			{	log.trace("Skipping opening info for selected, nothing selected?!"); }
 			return; 
 		}
-		Media m = (Media) result.results[tableSorter.modelIndex(selectedRow)][2];
+		Media m = (Media) result.results[tableSorter.modelIndex(selectedRow)][result.mediaIndex];
 		if(log.isTraceEnabled())
 		{	log.trace("Opening info dialog for track " + m); }
 		MediaTrackInfoDialog d = new MediaTrackInfoDialog(slave, m);
@@ -306,7 +306,7 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 			return null; 
 		}
 		Media[] m = new Media[1];
-		m[0] = (Media) result.results[tableSorter.modelIndex(selectedRow)][2];
+		m[0] = (Media) result.results[tableSorter.modelIndex(selectedRow)][result.mediaIndex];
 		return m;
 	}
 	

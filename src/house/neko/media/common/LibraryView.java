@@ -142,7 +142,7 @@ public class LibraryView extends Observable implements java.util.Observer
 			}
 			o[i][cn.length] = m;
 		}
-		return new LibrarySearchResult(cn, ct, o);
+		return new LibrarySearchResult(cn, ct, o, cn.length);
 	}
 	
 	public void clearFilter()

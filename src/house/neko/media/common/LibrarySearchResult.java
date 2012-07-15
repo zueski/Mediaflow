@@ -19,6 +19,8 @@ public class LibrarySearchResult
 	 *
 	 */
 	public Class[] columnTypes;
+	
+	public int mediaIndex;
 
 	/**
 	 *
@@ -26,11 +28,12 @@ public class LibrarySearchResult
 	 * @param ct
 	 * @param r
 	 */
-	public LibrarySearchResult(String[] cn, Class[] ct, Object[][] r)
+	public LibrarySearchResult(String[] cn, Class[] ct, Object[][] r, int mediaIndex)
 	{
 		results = r != null ? r : new String[0][0];
 		columnNames = cn != null ? cn : new String[0];
 		columnTypes = ct != null ? ct : new Class[0];
+		this.mediaIndex = mediaIndex;
 	}
 	
 	public String toString()
