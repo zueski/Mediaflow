@@ -134,6 +134,13 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		
 		fileMenu = new JMenu("File");
 		
+		FileImporter fi = new FileImporter(library, ConfigurationManager.getConfiguration("Slave(0).Import(0)"), this);
+		JMenuItem importFiles = new JMenuItem("Import from Files", 'O');
+		importFiles.setMnemonic('I');
+		importFiles.setAccelerator(KeyStroke.getKeyStroke('O', CONTROLCOMMAND_MASK));
+		importFiles.addActionListener(fi);
+		fileMenu.add(importFiles);
+		
 		JMenuItem importCD = new JMenuItem("Import from CD", 'D');
 		importCD.setMnemonic('I');
 		importCD.setAccelerator(KeyStroke.getKeyStroke('D', CONTROLCOMMAND_MASK | InputEvent.SHIFT_DOWN_MASK));

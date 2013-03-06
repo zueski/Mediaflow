@@ -9,6 +9,7 @@ import java.net.URL;
 import java.net.URI;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.Date;
 
 /**
  *
@@ -142,6 +143,9 @@ public class Media implements java.io.Serializable
 	 */
 	public long getAddedDateMS()
 	{	return added_date; }
+	
+	public Date getAddedDate()
+	{	return new Date(added_date); }
 	/**
 	 * 
 	 * @param ms
@@ -514,4 +518,6 @@ public class Media implements java.io.Serializable
 	public static final String NAME = "Title";
 	public static final String ARTIST = "Artist";
 	public static final String ALBUM = "Album";
+	public static final String DATEADDED = "Date Added";
+	public static final String[] COLUMNS = { NAME, ARTIST, ALBUM, DATEADDED };
 }

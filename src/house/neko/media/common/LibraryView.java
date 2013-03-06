@@ -49,6 +49,8 @@ public class LibraryView extends Observable implements java.util.Observer
 					columns[i] = Media.ARTIST;
 				} else if(Media.ALBUM.equalsIgnoreCase(columns[i])) {
 					columns[i] = Media.ALBUM;
+				} else if(Media.DATEADDED.equalsIgnoreCase(columns[i])) {
+					columns[i] = Media.DATEADDED;
 				}
 				if(log.isTraceEnabled()) { log.trace("Adding column " + columns[i] + " to view"); }
 			}
@@ -74,6 +76,41 @@ public class LibraryView extends Observable implements java.util.Observer
 			columnHeaders[i] = names[i];
 			columnClasses[i] = names[i].getClass();
 		}
+		if(log.isTraceEnabled()) { log.trace("added " + names.length + " columns to view"); }
+	}
+	
+	public void removeColumn(String name)
+	{
+		if(log.isDebugEnabled()) { log.debug("removing column " + name); }
+		int pos = -1;
+		for(int i = 0; i < columnHeaders.length; i++)
+		{
+			if(columnHeaders[i].equals(name))
+			{
+				pos = i;
+				break; 
+			}
+		}
+		if(pos > -1)
+		{
+			String[] newColumnHeaders = new String[columnHeaders.length - 1];
+			Class[] newColumnClasses = new Class[columnHeaders.length - 1];
+			int j = 0;
+			for(int i = 0; i < columnHeaders.length; i++)
+			{
+				if(i!= pos)
+				{
+					newColumnHeaders[j] = columnHeaders[i];
+					newColumnClasses[j++] = columnClasses[i];
+				}
+			}
+			columnHeaders = newColumnHeaders;
+			newColumnClasses = columnClasses;
+			remapMediaToResult();
+		}
+		remapMediaToResult();
+		setChanged();
+		notifyObservers();
 	}
 	
 	public LibrarySearchResult getVisibleMedia()
@@ -119,6 +156,18 @@ public class LibraryView extends Observable implements java.util.Observer
 		notifyObservers();
 	}
 	
+	private void remapMediaToResult()
+	{
+		Object[][] results = this.visibleMedia.results;
+		Vector<Media> found = new Vector<Media>(results.length);
+		for(int i = 0; i < results.length; i++)
+		{	found.add((Media) results[i][results[i].length-1]); }
+		synchronized(this)
+		{
+			this.visibleMedia = mapMediaToResult(found);
+		}
+	}
+	
 	private LibrarySearchResult mapMediaToResult(Vector<Media> found)
 	{
 		String[] cn = columnHeaders;
@@ -136,6 +185,8 @@ public class LibraryView extends Observable implements java.util.Observer
 					o[i][j] = m.getArtist();
 				} else if(cn[j] == Media.ALBUM) {
 					o[i][j] = m.getAlbum();
+				} else if(cn[j] == Media.DATEADDED) {
+					o[i][j] = m.getAddedDate();
 				} else {
 					o[i][j] = "UNKNOWN";
 				}
