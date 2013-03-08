@@ -86,7 +86,15 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 		addLabel(new JLabel("Interal ID"), gridbag, gc, 2, ++y);
 		addLabel(new JLabel(media.getID()), gridbag, gc, 3, y);
 		addLabel(new JLabel("Local ID"), gridbag, gc, 2, ++y);
-		addLabel(new JLabel(Long.toString(media.getLocalID())), gridbag, gc, 3, y);
+		{
+			Long lid = media.getLocalID();
+			if(lid != null)
+			{
+				addLabel(new JLabel(Long.toString(lid)), gridbag, gc, 3, y);
+			} else {
+				addLabel(new JLabel("NaN"), gridbag, gc, 3, y);
+			}
+		}
 		
 		addLabel(new JLabel("URL"), gridbag, gc, 2, ++y);
 		MediaLocation l = media.getLocation();
