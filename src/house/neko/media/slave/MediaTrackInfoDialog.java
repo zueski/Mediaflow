@@ -1,6 +1,7 @@
 package house.neko.media.slave;
 
 import house.neko.media.common.Media;
+import house.neko.media.common.MediaLocation;
 import house.neko.media.common.ConfigurationManager;
 
 import java.awt.event.ActionListener;
@@ -88,7 +89,8 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 		addLabel(new JLabel(Long.toString(media.getLocalID())), gridbag, gc, 3, y);
 		
 		addLabel(new JLabel("URL"), gridbag, gc, 2, ++y);
-		addLabel(new JLabel(media.getLocation().getLocationURLString()), gridbag, gc, 3, y);
+		MediaLocation l = media.getLocation();
+		addLabel(new JLabel(l != null ? l.getLocationURLString() : ""), gridbag, gc, 3, y);
 		
 		okayButton = new JButton("  OK  ");
 		okayButton.setActionCommand(UPDATE_ACTION);

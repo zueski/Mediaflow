@@ -3,7 +3,12 @@ package house.neko.media.common;
 
 public class MimeType implements java.io.Serializable
 {
-	private static final long serialVersionUID = 22L;
+	private static final long serialVersionUID = 23L;
+	
+	public final static String TYPE_FLAC = "FLAC";
+	private static MimeType _TYPE_FLAC = null;
+	public final static String TYPE_MP3 = "MPEG-1 Layer 3";
+	private static MimeType _TYPE_MP3 = null;
 
 	private String fileExtension;
 	private String mimeType;
@@ -54,4 +59,37 @@ public class MimeType implements java.io.Serializable
 	
 	public String toString()
 	{	return mimeType + ":" + mimeSubType + ":" + fileExtension + "(" + localID + ")"; }
+	
+	public static MimeType getInstanceFromType(String type)
+	{
+		if(type == null)
+		{	return null; }
+		if(type.startsWith(TYPE_FLAC))
+		{
+			if(_TYPE_FLAC == null)
+			{
+				synchronized(TYPE_FLAC)
+				{
+					_TYPE_FLAC = new MimeType();
+					_TYPE_FLAC.setFileExtension("flac");
+					_TYPE_FLAC.setMimeType("audio");
+					_TYPE_FLAC.setMimeSubType("flac");
+				}
+			}
+			return _TYPE_FLAC;
+		} else if(type.startsWith(TYPE_MP3)) {
+			if(_TYPE_MP3 == null)
+			{
+				synchronized(TYPE_MP3)
+				{
+					_TYPE_MP3 = new MimeType();
+					_TYPE_MP3.setFileExtension("mp3");
+					_TYPE_MP3.setMimeType("audio");
+					_TYPE_MP3.setMimeSubType("mpeg");
+				}
+			}
+			return _TYPE_MP3;
+		}
+		return null;
+	}
 }

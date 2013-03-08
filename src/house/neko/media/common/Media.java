@@ -382,6 +382,9 @@ public class Media implements java.io.Serializable
 		sb.append(delim);
 		sb.append(artist);
 		sb.append(delim);
+		sb.append(getLocation());
+		sb.append(delim);
+		
 		return sb.toString();
 	}
 	

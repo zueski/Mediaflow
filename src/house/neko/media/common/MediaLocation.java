@@ -137,4 +137,7 @@ public class MediaLocation implements java.io.Serializable
 			}
 		}
 	}
+	
+	public String toString()
+	{	return "MediaLocation@" + locationURLString; }
 }

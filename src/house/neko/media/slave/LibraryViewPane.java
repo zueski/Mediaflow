@@ -55,7 +55,7 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 
 	private JTable table;
 	private String[] columnHeaders = { };
-	private Class[] columnClasses = { };
+	//private Class[] columnClasses = { };
 	private TableColumn[] columns = { };
 	private TableSorter tableSorter;
 	private DefaultTableColumnModel colModel;
@@ -66,36 +66,25 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 	 */
 	public LibraryViewPane(Slave mms, HierarchicalConfiguration config, house.neko.media.common.LibraryView libraryView)
 	{
-		this(new JTable(), mms, config, libraryView);
-	}
-
-	private LibraryViewPane(JTable t, Slave mms, HierarchicalConfiguration config, house.neko.media.common.LibraryView libraryView)
-	{
-		super(t);
+		super();
 		slave = mms;
 		this.config = config;
 		this.libraryView = libraryView;
-		table = t;
 		
 		this.log = ConfigurationManager.getLog(getClass());
 		
 		setViewportView(table);
 
-		tableSorter = new TableSorter(this);  // sets model
-		tableSorter.setTableHeader(table.getTableHeader());
+		
 		
 		colModel = new DefaultTableColumnModel();
 		
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		ListSelectionModel rowSM = table.getSelectionModel();
-		rowSM.addListSelectionListener(this);
-		
 		columnHeaders = libraryView.getColumnHeaders();
-		columnClasses = new Class[columnHeaders.length];
+		//columnClasses = new Class[columnHeaders.length];
 		columns = new TableColumn[columnHeaders.length];
 		for(int i = 0; i < columns.length; i++)
 		{
-			columnClasses[i] = columnHeaders[i].getClass();
+			//columnClasses[i] = columnHeaders[i].getClass();
 			columns[i] = new TableColumn(i);
 			columns[i].setIdentifier(columnHeaders[i]);
 			columns[i].setHeaderValue(columnHeaders[i]);
@@ -106,11 +95,18 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 		result = libraryView.getVisibleMedia();
 		libraryView.addObserver(this);
 		
+		tableSorter = new TableSorter(this);  // sets model
+		table = new JTable(tableSorter, colModel);
+		//table.setModel(tableSorter);
+		//table.setColumnModel(colModel);
+		
 		listeners = new TableModelListener[0];
 		
 		tableSorter.setTableHeader(table.getTableHeader());
-		table.setModel(tableSorter);
-		table.setColumnModel(colModel);
+		
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		ListSelectionModel rowSM = table.getSelectionModel();
+		rowSM.addListSelectionListener(this);
 		
         /*String javaVersion = System.getProperty("java.version");
 		if(javaVersion != null && javaVersion.matches("^1\\.6.*$"))
@@ -121,6 +117,8 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 		
 		// assign mouse listener
 		addMouseListener(new LibraryMouseListener(this));
+		
+		super.setViewportView(table);
 		
 		if(log.isTraceEnabled())
         {	log.trace("Library view created"); }
@@ -135,6 +133,8 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 	{
 		if(log.isTraceEnabled())
 		{	log.trace("Setting LibrarySearchResults: " + r); }
+		ListSelectionModel lsm = table.getSelectionModel();
+		lsm.clearSelection();
 		result = r;
 		table.tableChanged(new TableModelEvent(this, 0, result.results.length, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
 		if(log.isTraceEnabled())
@@ -173,8 +173,8 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 	 */
 	public Class getColumnClass(int columnIndex)
 	{
-		//return table.getColumnClass(columnIndex); 
-		return columnClasses[columnIndex]; 
+		return colModel.getColumn(columnIndex).getHeaderValue().getClass();
+		//return columnClasses[columnIndex]; 
 	}
 
 	// TableModel
@@ -325,8 +325,9 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 	
 	public Action[] getActions()
 	{
-		Action[] allActions = new Action[Media.COLUMNS.length];
-		for(int i = 0; i < allActions.length; i++)
+		Action[] allActions = new Action[Media.COLUMNS.length+1];
+		allActions[Media.COLUMNS.length] = new RefreshAction(this);
+		for(int i = 0; i < Media.COLUMNS.length; i++)
 		{
 			boolean selected = false;
 			for(int j = 0; j < columnHeaders.length; j++)
@@ -364,6 +365,28 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 		}
 	}
 	
+	public class RefreshAction extends AbstractAction
+	{
+		house.neko.media.slave.LibraryViewPane viewPane;
+		final static private String NAME = "Refresh";
+		
+		public RefreshAction(house.neko.media.slave.LibraryViewPane viewPane)
+		{
+			super(NAME);
+			putValue(super.LONG_DESCRIPTION, NAME);
+			putValue(super.SHORT_DESCRIPTION, NAME);
+			this.viewPane = viewPane;
+		}
+		
+		public void actionPerformed(ActionEvent e)
+		{
+			AbstractButton aButton = (AbstractButton) e.getSource();
+			boolean selected = aButton.getModel().isSelected();
+			if(log.isTraceEnabled()) { log.trace("refreshing LibraryViewPane"); }
+			setResult(libraryView.getVisibleMedia());
+		}
+	}
+	
 	public class ToggleColumnAction extends AbstractAction
 	{
 		house.neko.media.slave.LibraryViewPane viewPane;
@@ -386,9 +409,11 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 			if(log.isTraceEnabled()) { log.trace("change state for " + mediaName + " -> " + selected); }
 			if(!selected)
 			{
-				//libraryView.removeColumn(mediaName);
 				TableColumn column = table.getColumn(mediaName);
+				//colModel.removeColumn(column);
 				table.removeColumn(column);
+			} else {
+				
 			}
 		}
 	}

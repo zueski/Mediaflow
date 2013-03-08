@@ -38,9 +38,7 @@ public class SlaveCDImporter
 	{
 		this.library = library;
 		this.log = ConfigurationManager.getLog(getClass());
-		flacMimeType = new MimeType();
-		flacMimeType.setFileExtension("flac");
-		flacMimeType.setMimeType("audio/flac");
+		flacMimeType = MimeType.getInstanceFromType(MimeType.TYPE_FLAC);
 	}
 
 	public void importCD()

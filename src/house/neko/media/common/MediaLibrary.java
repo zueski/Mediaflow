@@ -7,6 +7,11 @@ import java.awt.image.BufferedImage;
 import java.util.Iterator;
 import java.util.Vector;
 
+import javax.swing.Action;
+import javax.swing.AbstractAction;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import org.apache.commons.configuration.HierarchicalConfiguration;
 
 import org.apache.commons.logging.Log;
@@ -244,4 +249,10 @@ public class MediaLibrary extends java.util.Observable
 	{
 		
 	}
+	
+	public Action[] getActions()
+	{
+		return new Action[0];
+	}
+	
 }

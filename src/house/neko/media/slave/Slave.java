@@ -54,12 +54,14 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 	private HierarchicalConfiguration config;
 	private MediaLibrary library;
 	private LibraryViewPane view;
+	private LibrarySearchPane search;
 	private MediaPlayer player;
 	private MediaPlayerControls controls;
 	private EventMapper eventMapper;
 	
 	private JMenuBar menubar;
 	private JMenu fileMenu;
+	private JMenu libraryMenu;
 	private JMenu trackMenu;
 	private JMenu viewMenu;
 	private JMenu deviceMenu;
@@ -101,7 +103,9 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 			try { dialog.wait(); } catch(InterruptedException ie) { }
 		}
 		
-		view = new LibraryViewPane(this, ConfigurationManager.getConfiguration("Slave(0).LibraryView(0)"), library.getNewView());
+		house.neko.media.common.LibraryView libraryview = library.getNewView();
+		view = new LibraryViewPane(this, ConfigurationManager.getConfiguration("Slave(0).LibraryView(0)"), libraryview);
+		search = new LibrarySearchPane(ConfigurationManager.getConfiguration("Slave(0).LibrarySearch(0)"), libraryview);
 		player = new MediaPlayer();
 		controls = new MediaPlayerControls(player, eventMapper);
 		eventMapper = new EventMapper(player);
@@ -110,6 +114,8 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		Container c = getContentPane();
 		c.setLayout(new BorderLayout());
 
+		c.add(search, BorderLayout.NORTH);
+		
 		c.add(view, BorderLayout.CENTER);
 
 		c.add(controls, BorderLayout.SOUTH);
@@ -181,14 +187,15 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 		menubar.add(fileMenu);
 		
 		viewMenu = new JMenu("View");
-		Action[] viewActions = view.getActions();
-		for(Action a : viewActions)
-		{
-			JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a);
-			viewMenu.add(menuItem);
-		}
+		for(Action a : view.getActions())
+		{	viewMenu.add(new JCheckBoxMenuItem(a)); }
 		
 		menubar.add(viewMenu);
+		
+		libraryMenu = new JMenu("Library");
+		for(Action a : library.getActions())
+		{	libraryMenu.add(new JMenuItem(a)); }
+		menubar.add(libraryMenu);
 		
 		trackMenu = new JMenu("Track");
 		JMenuItem getTrackInfo = new JMenuItem("Get track info", 'I');
@@ -213,12 +220,8 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 				if(i > 0)
 				{	deviceMenu.	addSeparator(); }
 				Exporter exporter = new Exporter(library, devices.get(i));
-				Action[] actions = exporter.getActions(view);
-				for(Action a : actions)
-				{
-					JMenuItem menuItem = new JMenuItem(a);
-					deviceMenu.add(menuItem);
-				}
+				for(Action a : exporter.getActions(view))
+				{	deviceMenu.add(new JMenuItem(a)); }
 			}
 			menubar.add(deviceMenu);
 		}
