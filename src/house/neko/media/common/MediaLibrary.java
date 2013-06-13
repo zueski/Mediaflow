@@ -28,6 +28,7 @@ public class MediaLibrary extends java.util.Observable
 	private java.util.Map<String,Media> cache;
 	private DataStore primaryStore;
 	private Vector<LibraryView> libraryViews = new Vector<LibraryView>(1, 1);
+	private TaskEngine taskEngine;
 	
 	/**
 	 *
@@ -38,6 +39,9 @@ public class MediaLibrary extends java.util.Observable
 		this.config = config;
 		this.log = ConfigurationManager.getLog(MediaLibrary.class);
 		cache = java.util.Collections.synchronizedMap(new java.util.HashMap<String,Media>());
+		taskEngine = new TaskEngine();
+		taskEngine.addQueue("CD", 1);
+		taskEngine.addQueue("cpu", Math.max(1, Runtime.getRuntime().availableProcessors()));
 		
 		datastores = new Vector<DataStore>();
 		int maxIndex = config.getMaxIndex("DataStore");
@@ -197,6 +201,25 @@ public class MediaLibrary extends java.util.Observable
 		{	System.out.println(i.next()); }
 	}
 	
+	
+	public Media[] getAlbum(Media m)
+	{	return m == null ? null : getAlbum(m.getAlbum()); }
+	
+	public Media[] getAlbum(String album)
+	{
+		if(album == null)
+		{	return new Media[0]; }
+		Vector<Media> v = new Vector<Media>();
+		Iterator<Media> i = cache.values().iterator();
+		while(i.hasNext())
+		{
+			Media m = i.next();
+			if(album.equals(m.getAlbum()))
+			{	v.add(m); }
+		}
+		return v.toArray(new Media[v.size()]);
+	}
+	
 	/**
 	 *
 	 * @param v
@@ -239,6 +262,12 @@ public class MediaLibrary extends java.util.Observable
 		{	v.clearFilter(); }
 	}
 	
+	public void submitTask(Runnable r)
+	{	taskEngine.submit(taskEngine.DEFAULT, r); }
+	
+	public void submitTask(String q, Runnable r)
+	{	taskEngine.submit(q, r); }
+	
 	public MimeType getMimeTypeByFileExtension(String extension)
 	{	return primaryStore.getMimeTypeByFileExtension(extension); }
 	
@@ -252,7 +281,8 @@ public class MediaLibrary extends java.util.Observable
 	
 	public Action[] getActions()
 	{
-		return new Action[0];
+		Action[] dataStoreActions = primaryStore.getActions();
+		return dataStoreActions;
 	}
 	
 }

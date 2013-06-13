@@ -8,6 +8,13 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+import java.util.concurrent.RunnableFuture;
+
+import javax.swing.Action;
+import javax.swing.AbstractAction;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 
@@ -36,6 +43,7 @@ public class DatabaseDataStore implements DataStore
 	private MediaLibrary library = null;
 	private File artworkBasePath;
 	
+	private static final String REORG_FILES_ACTION = "C";
 	
 	private String usernm = "UNKNOWN";
 	private int userid = 0;
@@ -304,9 +312,8 @@ public class DatabaseDataStore implements DataStore
 				{
 					if(log.isTraceEnabled())
 					{	log.trace("Need to update base " + m.getID() + " to database"); }
-					PreparedStatement s = _conn.prepareStatement("update media_track set track_name=?,track_album=?,track_audit_timestamp=CURRENT_TIMESTAMP where track_id = ?");
+					PreparedStatement s = _conn.prepareStatement("update media_track set track_name=?,track_audit_timestamp=CURRENT_TIMESTAMP where track_id = ?");
 					s.setString(1, m.getName());
-					s.setString(2, m.getAlbum());
 					s.setLong(3, trackid);
 					s.executeUpdate();
 					s.close();
@@ -630,14 +637,14 @@ public class DatabaseDataStore implements DataStore
 				{	log.trace("Need to insert " + m.getID() + " to database"); }
 				int artist = getArtistID(m, _conn);
 				if(insertMediaTrackStatement == null)
-				{	insertMediaTrackStatement = _conn.prepareStatement("insert into media_track(track_name,track_artist_id,track_artist_alias_id,track_album,track_audit_user,track_audit_timestamp,track_add_timestamp,track_length_ms,track_persistent_id) values (?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?)", Statement.RETURN_GENERATED_KEYS); }
+				{	insertMediaTrackStatement = _conn.prepareStatement("insert into media_track(track_name,track_artist_id,track_artist_alias_id,track_audit_user,track_audit_timestamp,track_add_timestamp,track_length_ms,track_persistent_id) values (?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?)", Statement.RETURN_GENERATED_KEYS); }
 				insertMediaTrackStatement.setString(1, m.getName());
 				insertMediaTrackStatement.setInt(2, artist);
 				insertMediaTrackStatement.setInt(3, getArtistAliasID(m, _conn));
-				insertMediaTrackStatement.setString(4, m.getAlbum());
-				insertMediaTrackStatement.setInt(5, userid);
-				insertMediaTrackStatement.setLong(6, m.getLength());
-				insertMediaTrackStatement.setString(7, m.getID());
+				//insertMediaTrackStatement.setString(4, m.getAlbum());
+				insertMediaTrackStatement.setInt(4, userid);
+				insertMediaTrackStatement.setLong(5, m.getLength());
+				insertMediaTrackStatement.setString(6, m.getID());
 				insertMediaTrackStatement.executeUpdate();
 				if(log.isTraceEnabled())
 				{	log.trace("inserting track " + m.getName() + "' with artist '" + m.getArtist() + "' (" +artist + ")"); }
@@ -740,16 +747,38 @@ public class DatabaseDataStore implements DataStore
 		}
 	}
 	
+	private File getDefaultMediaFile(File base, Media m)
+	{
+		try
+		{
+			File f = (base != null ? base : new File(config.getString("MusicBasePath")));
+			f = new File(f, sanitizeFilenamePart(m.getArtist()));
+			if(m.getAlbum() != null)
+			{	f = new File(f, sanitizeFilenamePart(m.getAlbum())); }
+			Integer t = m.getTrackNumber();
+			String track = "";
+			if(t != null)
+			{
+				if(t < 10)
+				{
+					track = "0" + t; 
+				} else {
+					track = t.toString();
+				}
+			}
+			f = new File(f, sanitizeFilenamePart(track + m.getName()) + "." + m.getLocation().getMimeType().getFileExtension());
+			return f;
+		} catch(Exception e) {
+			log.error("Unable to get media path for " + m, e);
+			return null;
+		}
+	}
 	public File getDefaultMediaFile(Media m)
 	{
 		try
 		{
 			File f = new File(config.getString("MusicBasePath"));
-			f = new File(f, sanitizeFilenamePart(m.getArtist()));
-			if(m.getAlbum() != null)
-			{	f = new File(f, sanitizeFilenamePart(m.getAlbum())); }
-			f = new File(f, sanitizeFilenamePart(m.getName()) + "." + m.getLocation().getMimeType().getFileExtension());
-			return f;
+			return getDefaultMediaFile(f, m);
 		} catch(Exception e) {
 			log.error("Unable to get media path", e);
 			return null;
@@ -803,6 +832,75 @@ public class DatabaseDataStore implements DataStore
 		return new DataStore.DataStoreConfigurationHelper(keys, defaultValues, descriptions);
 	}
 	
+	public Action[] getActions()
+	{
+		Action[] a = new Action[1];
+		a[0] = new FileReorgAction(this);
+		return a;
+	}
+	
+	
+	public class FileReorgAction extends AbstractAction implements Runnable
+	{
+		DatabaseDataStore store;
+		final static private String NAME = "Reorganize Library";
+		
+		public FileReorgAction(DatabaseDataStore store)
+		{
+			super(NAME);
+			putValue(super.LONG_DESCRIPTION, NAME);
+			putValue(super.SHORT_DESCRIPTION, NAME);
+			this.store = store;
+		}
+		
+		public void actionPerformed(ActionEvent e)
+		{
+			if(log.isDebugEnabled()) { log.trace("queuing Library Reorg"); }
+			library.submitTask(this);
+		}
+		/*
+		This function will do the following actions:
+			1.  create a new top level folder
+			2.  move each file to this new folder
+			3.  rename the old folder to the new
+			4.  remove empty dirs from old folder (including old folder)
+		*/
+		public void run()
+		{
+			if(log.isDebugEnabled()) { log.debug("Reorg - Started"); }
+			Connection c = null;
+			REORG:try
+			{
+				java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("_yyyyMMdd_HHmmss");
+				File oldBase = new File(config.getString("MusicBasePath"));
+				File newBase = new File(oldBase.getParentFile(), oldBase.getName() + dateFormat.format(new java.util.Date()));
+				if(log.isDebugEnabled()) { log.debug("Reorg - moving " + oldBase.getAbsolutePath() + " to " + newBase.getAbsolutePath()); }
+				if(!newBase.mkdirs())
+				{
+					log.error("Unable to create new dir " + newBase.getAbsolutePath());
+					break REORG;
+				}
+				for(Media m : getAllMedia())
+				{
+					MediaLocation l = m.getLocation();
+					if(l == null)
+					{	continue; }
+					File of = l.getFile();
+					if(of == null)
+					{	continue; }
+					File nf = getDefaultMediaFile(newBase, m);
+					File nfol = getDefaultMediaFile(m);
+					if(log.isDebugEnabled()) { log.debug("Reorg - would move " + of.getAbsolutePath() + " to " + nf.getAbsolutePath() + "(" + nfol.getAbsolutePath() + ")"); }
+				}
+			} catch(Exception e) {
+				log.error("Reorg - Unable to complete", e);
+			} finally {
+				
+			}
+			if(log.isDebugEnabled()) { log.debug("Reorg - Complete"); }
+		}
+	}
+	
 	/**
 	 *
 	 */
@@ -839,11 +937,14 @@ public class DatabaseDataStore implements DataStore
 										"rl.mime_id, " +				// 14
 										"rl.location_size, " + // 15
 										"ll.location_size," + // 16
-										"t.track_album," + // 17
+										"ml.list_name," + // 17
 										"t.TRACK_ADD_TIMESTAMP," + // 18
-										"t.TRACK_AUDIT_TIMESTAMP " + // 18
+										"t.TRACK_AUDIT_TIMESTAMP," + // 19
+										"mtl.seq_nbr " + // 20
 										"FROM media_track t " +
 										"inner join artist a on t.track_artist_id = a.artist_id " +
+										"left join media_track_list mtl on (t.track_source_list_id=mtl.list_id and t.track_id=mtl.track_id) " +
+										"left join media_list ml on (mtl.list_id=ml.list_id) " +
 										"left join media_track_location ll on (t.track_id = ll.track_id and ll.location_type = '" + URL_LOCATION_TYPE_LOCAL + "') " +
 										"left join media_track_location rl on (t.track_id = rl.track_id and rl.location_type = '" + URL_LOCATION_TYPE_REMOTE + "') ";
 	static private final int SQL_SELECT_TRACK_ID_POS = 1;
@@ -863,4 +964,5 @@ public class DatabaseDataStore implements DataStore
 	static private final int SQL_SELECT_TRACK_MIME_TYPE_ID_LOCAL_POS = 12;
 	static private final int SQL_SELECT_TRACK_URL_REMOTE_POS = 13;
 	static private final int SQL_SELECT_TRACK_MIME_TYPE_ID_REMOTE_POS = 14;
+	static private final int SQL_SELECT_TRACK_ALBUM_TRACK_NO_POS = 20;
 }

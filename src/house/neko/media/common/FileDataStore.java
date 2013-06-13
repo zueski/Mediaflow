@@ -6,6 +6,11 @@ import java.io.BufferedWriter;
 
 import java.awt.image.BufferedImage;
 
+import javax.swing.Action;
+import javax.swing.AbstractAction;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import org.apache.commons.logging.Log;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
@@ -302,4 +307,7 @@ public class FileDataStore implements DataStore
 			cleanThyself();
 		}
 	}
+	
+	public Action[] getActions()
+	{	return new Action[0]; }
 }

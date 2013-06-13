@@ -31,14 +31,14 @@ CREATE TABLE public.media_list (
 	list_release_date    	date NULL,
 	list_audit_user_id   	int4 NULL,
 	list_modify_timestamp	timestamp NULL,
-	list_create_timestamp	varchar(25) NULL 
+	list_create_timestamp	timestamp NULL,
 	);
 CREATE TABLE public.media_track ( 
 	track_id             	int8 NOT NULL DEFAULT nextval('media_track_track_id_seq'::text),
 	track_name           	varchar(1024) NULL,
 	track_artist_id      	int8 NULL,
 	track_artist_alias_id	int8 NULL,
-	TRACK_ALBUM				varchar(1024),
+	track_source_list_id	int8 null,
 	track_length_ms      	int8 NULL,
 	track_persistent_id  	varchar(32) NULL,
 	track_audit_user     	int4 NULL,
@@ -98,7 +98,10 @@ inner join public.role r on ur.role_id = r.role_id;
 -- pre-populate some mime types
 INSERT INTO public.mime_type(mime_id, mime_type, mime_sub_type, mime_file_extension, mime_file_type, mime_file_creator) VALUES(21, 'audio', 'mpeg', 'mp3', 1297101600, 1296321857);
 INSERT INTO public.mime_type(mime_id, mime_type, mime_sub_type, mime_file_extension, mime_file_type, mime_file_creator) VALUES(22, 'audio', 'x-m4a', 'm4a', 1295270176, 1752133483);
+insert into public.mime_type (mime_type,mime_sub_type, mime_file_extension) values ('audio', 'mp4a-latm','m4p');
 insert into public.mime_type (mime_type,mime_sub_type, mime_file_extension) values ('audio', 'flac','flac');
+insert into public.mime_type (mime_type,mime_sub_type, mime_file_extension) values ('video', 'mp4','mp4');
+insert into public.mime_type (mime_type,mime_sub_type, mime_file_extension) values ('video', 'x-m4v','m4v');
 
 INSERT INTO public.role(role_id, role_nm) VALUES(1, 'music');
 INSERT INTO public.role(role_id, role_nm) VALUES(2, 'music');

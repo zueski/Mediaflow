@@ -1,5 +1,8 @@
 package house.neko.media.common;
 
+import javax.swing.Action;
+import java.awt.event.ActionListener;
+
 import java.awt.image.BufferedImage;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
@@ -11,7 +14,8 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
  * DataStores should never reset the dirty bits!
  *
  */
-public abstract interface DataStore
+public abstract interface DataStore 
+//extends ActionListener
 {
 	/**
 	 *
@@ -32,6 +36,8 @@ public abstract interface DataStore
 	 */
 	// TODO: rename this to loadAllMedia()
 	public abstract Media[] getAllMedia();
+	
+	public abstract Action[] getActions();
 	/**
 	 *
 	 * @param m
