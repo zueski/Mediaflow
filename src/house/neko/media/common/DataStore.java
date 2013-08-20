@@ -44,6 +44,8 @@ public abstract interface DataStore
 	 */
 	public abstract void putMedia(Media m);
 	
+	public abstract void putMediaList(MediaList l);
+	
 	public abstract MimeType getMimeTypeByFileExtension(String extension);
 	
 	public abstract DataStoreConfigurationHelper getConfigurationHelper();

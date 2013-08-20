@@ -25,7 +25,8 @@ public class MediaLibrary extends java.util.Observable
 	private Log log;
 	private HierarchicalConfiguration config;
 	private Vector<DataStore> datastores;
-	private java.util.Map<String,Media> cache;
+	private java.util.Map<String,Media> mediaCache;
+	private java.util.Map<String,MediaList> listCache;
 	private DataStore primaryStore;
 	private Vector<LibraryView> libraryViews = new Vector<LibraryView>(1, 1);
 	private TaskEngine taskEngine;
@@ -38,7 +39,8 @@ public class MediaLibrary extends java.util.Observable
 	{
 		this.config = config;
 		this.log = ConfigurationManager.getLog(MediaLibrary.class);
-		cache = java.util.Collections.synchronizedMap(new java.util.HashMap<String,Media>());
+		mediaCache = java.util.Collections.synchronizedMap(new java.util.HashMap<String,Media>());
+		listCache = java.util.Collections.synchronizedMap(new java.util.HashMap<String,MediaList>());
 		taskEngine = new TaskEngine();
 		taskEngine.addQueue("CD", 1);
 		taskEngine.addQueue("cpu", Math.max(1, Runtime.getRuntime().availableProcessors()));
@@ -112,7 +114,17 @@ public class MediaLibrary extends java.util.Observable
 	public void add(Media m)
 	{
 		if(m != null)
-		{	cache.put(m.getID(), m); }
+		{	mediaCache.put(m.getID(), m); }
+		setChanged();
+	}
+	
+	public void addMediaList(MediaList l)
+	{	add(l); }
+	
+	public void add(MediaList l)
+	{
+		if(l != null)
+		{	listCache.put(l.getID(), l); }
 		setChanged();
 	}
 	
@@ -122,19 +134,37 @@ public class MediaLibrary extends java.util.Observable
 		{	log.warn("Unable to save library, no data store marked Primary"); return; }
 		if(log.isDebugEnabled())
 		{	log.debug("Saving library"); }
-		java.util.Iterator<Media> i = cache.values().iterator();
 		int updatedCount = 0;
-		while(i.hasNext())
-		{
-			Media m = i.next();
-			if(m.getID() == null)
-			{	m.setID(Media.generateID()); }
-			if(m.isDirty())
+		SAVEMEDIA:{
+			java.util.Iterator<Media> i = mediaCache.values().iterator();
+			while(i.hasNext())
 			{
-				if(log.isTraceEnabled())
-				{	log.trace("Putting dirty track " + m); }
-				primaryStore.putMedia(m);
-				updatedCount++;
+				Media m = i.next();
+				if(m.getID() == null)
+				{	m.setID(Media.generateID()); }
+				if(m.isDirty())
+				{
+					if(log.isTraceEnabled())
+					{	log.trace("Putting dirty track " + m); }
+					primaryStore.putMedia(m);
+					updatedCount++;
+				}
+			}
+		}
+		SAVELIST:{
+			java.util.Iterator<MediaList> i = listCache.values().iterator();
+			while(i.hasNext())
+			{
+				MediaList l = i.next();
+				if(l.getID() == null)
+				{	l.setID(Media.generateID()); }
+				if(l.isDirty())
+				{
+					if(log.isTraceEnabled())
+					{	log.trace("Putting dirty list " + l); }
+					primaryStore.putMediaList(l);
+					updatedCount++;
+				}
 			}
 		}
 		if(log.isDebugEnabled())
@@ -147,7 +177,7 @@ public class MediaLibrary extends java.util.Observable
 		{	log.warn("Unable to save library, no data store marked Primary"); return false; }
 		if(log.isDebugEnabled())
 		{	log.debug("checking for dirt in library"); }
-		java.util.Iterator<Media> i = cache.values().iterator();
+		java.util.Iterator<Media> i = mediaCache.values().iterator();
 		while(i.hasNext())
 		{
 			Media m = i.next();
@@ -171,7 +201,10 @@ public class MediaLibrary extends java.util.Observable
 	 * @return
 	 */
 	public Media getMedia(String id)
-	{	return cache.get(id); }
+	{	return mediaCache.get(id); }
+	
+	public MediaList getMediaList(String id)
+	{	return listCache.get(id); }
 	
 	public Media getMediaByFile(File f)
 	{
@@ -189,14 +222,17 @@ public class MediaLibrary extends java.util.Observable
 	}
 	
 	public Media[] getAllMedia()
-	{	return cache.values().toArray(new Media[cache.size()]); }
+	{	return mediaCache.values().toArray(new Media[mediaCache.size()]); }
+	
+	public MediaList[] getAllMediaList()
+	{	return listCache.values().toArray(new MediaList[listCache.size()]); }
 	
 	/**
 	 *
 	 */
 	public void dump()
 	{
-		java.util.Iterator<Media> i = cache.values().iterator();
+		java.util.Iterator<Media> i = mediaCache.values().iterator();
 		while(i.hasNext())
 		{	System.out.println(i.next()); }
 	}
@@ -210,7 +246,7 @@ public class MediaLibrary extends java.util.Observable
 		if(album == null)
 		{	return new Media[0]; }
 		Vector<Media> v = new Vector<Media>();
-		Iterator<Media> i = cache.values().iterator();
+		Iterator<Media> i = mediaCache.values().iterator();
 		while(i.hasNext())
 		{
 			Media m = i.next();
@@ -229,7 +265,7 @@ public class MediaLibrary extends java.util.Observable
 		if(log.isDebugEnabled())
 		{	log.debug("Setting default view"); }
 		libraryView = v;
-		java.util.Vector<Media> t = new java.util.Vector<Media>(cache.values());
+		java.util.Vector<Media> t = new java.util.Vector<Media>(mediaCache.values());
 		Object[][] o = new Object[t.size()][3];
 		String[] cn = { "Title", "Artist" };
 		Class[] ct = { "".getClass(), "".getClass() };

@@ -70,7 +70,6 @@ public class Media implements java.io.Serializable
 		album = null;
 		publish_date = 0L;
 		track = null;
-		track = null;
 		length = 0;
 		localLocation = null;
 		remoteLocation = null;

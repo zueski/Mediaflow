@@ -163,6 +163,12 @@ public class DatabaseDataStore implements DataStore
 		return l;
 	}
 
+	private MediaList mapResultSetToMediaList(ResultSet rs)
+		throws java.sql.SQLException
+	{
+		return null;
+	}
+	
 	private Media mapResultSetToMedia(ResultSet rs)
 		throws java.sql.SQLException
 	{
@@ -173,7 +179,7 @@ public class DatabaseDataStore implements DataStore
 		m.setAddedDateMS(rs.getDate(SQL_SELECT_TRACK_ADD_TIMESTAMP_POS).getTime());
 		m.setName(rs.getString(SQL_SELECT_TRACK_NAME_POS));
 		m.setArtist(rs.getString(SQL_SELECT_TRACK_ARTIST_NAME_POS));
-		m.setAlbum(rs.getString(SQL_SELECT_TRACK_ALBUM_POS));
+		m.setAlbum(rs.getString(SQL_SELECT_TRACK_ALBUM));
 		SETLOCATIONS:{
 			String localURL = rs.getString(SQL_SELECT_TRACK_URL_LOCAL_POS);
 			if(localURL != null)
@@ -290,6 +296,42 @@ public class DatabaseDataStore implements DataStore
 		}
 		return list;
 	}
+	
+	public MediaList[] loadAllMediaList()
+	{
+		if(_conn == null)
+		{	log.error("DatabaseDatastore not connected!");  return new MediaList[0]; }
+		MediaList[] list = null;
+		PreparedStatement s = null;
+		ResultSet rs = null;
+		try
+		{
+			long startTimeMS = 0L;
+			if(log.isDebugEnabled())
+			{	log.debug("Getting all media list from database store"); startTimeMS = System.currentTimeMillis(); }
+			// get IDs from db
+			
+			s = _conn.prepareStatement(SQL_SELECTMEDIALIST);
+			rs = s.executeQuery();
+			
+			Vector<MediaList> mlist = new Vector<MediaList>();
+			while(rs.next())
+			{   mlist.add(mapResultSetToMediaList(rs)); }
+			rs.close();
+			s.close();
+			
+			if(log.isTraceEnabled())
+			{	log.trace("Found " + mlist.size() + " lists, loading"); }
+			list = mlist.toArray(new MediaList[mlist.size()]);
+			for(int k = 0; k < list.length; k++)
+			{	library.addMediaList(list[k]); }
+			if(log.isDebugEnabled())
+			{	log.debug("Loaded " + list.length + " lists in " + (System.currentTimeMillis() - startTimeMS) + " millisecons"); }
+		} catch(Exception e) {
+			log.error(e.toString(), e);
+		}
+		return list;
+	}
 
 	/**
 	 *
@@ -346,6 +388,11 @@ public class DatabaseDataStore implements DataStore
 		} catch(Exception e) {
 			log.error(e.toString(), e);
 		}
+	}
+	
+	public void putMediaList(MediaList l)
+	{
+		
 	}
 	
 	public void setArtwork(Media m, String mimeType, BufferedImage image, int index)
@@ -637,14 +684,20 @@ public class DatabaseDataStore implements DataStore
 				{	log.trace("Need to insert " + m.getID() + " to database"); }
 				int artist = getArtistID(m, _conn);
 				if(insertMediaTrackStatement == null)
-				{	insertMediaTrackStatement = _conn.prepareStatement("insert into media_track(track_name,track_artist_id,track_artist_alias_id,track_audit_user,track_audit_timestamp,track_add_timestamp,track_length_ms,track_persistent_id) values (?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?)", Statement.RETURN_GENERATED_KEYS); }
+				{	insertMediaTrackStatement = _conn.prepareStatement("insert into media_track(track_name,track_artist_id,track_artist_alias_id,track_album,track_album_num,track_audit_user,track_audit_timestamp,track_add_timestamp,track_length_ms,track_persistent_id) values (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?)", Statement.RETURN_GENERATED_KEYS); }
 				insertMediaTrackStatement.setString(1, m.getName());
 				insertMediaTrackStatement.setInt(2, artist);
 				insertMediaTrackStatement.setInt(3, getArtistAliasID(m, _conn));
-				//insertMediaTrackStatement.setString(4, m.getAlbum());
-				insertMediaTrackStatement.setInt(4, userid);
-				insertMediaTrackStatement.setLong(5, m.getLength());
-				insertMediaTrackStatement.setString(6, m.getID());
+				insertMediaTrackStatement.setString(4, m.getAlbum());
+				if(m.getTrackNumber() != null && m.getTrackNumber() > 0)
+				{
+					insertMediaTrackStatement.setInt(5, m.getTrackNumber());
+				} else {
+					insertMediaTrackStatement.setNull(5, java.sql.Types.INTEGER);
+				}
+				insertMediaTrackStatement.setInt(6, userid);
+				insertMediaTrackStatement.setLong(7, m.getLength());
+				insertMediaTrackStatement.setString(8, m.getID());
 				insertMediaTrackStatement.executeUpdate();
 				if(log.isTraceEnabled())
 				{	log.trace("inserting track " + m.getName() + "' with artist '" + m.getArtist() + "' (" +artist + ")"); }
@@ -793,6 +846,7 @@ public class DatabaseDataStore implements DataStore
 		public void run()
 		{
 			loadAllMedia();
+			loadAllMediaList();
 			_is_loaded = true;
 			library.forceUpdate();
 		}
@@ -920,6 +974,10 @@ public class DatabaseDataStore implements DataStore
 	
 	static private final String URL_LOCATION_TYPE_LOCAL = "L";
 	static private final String URL_LOCATION_TYPE_REMOTE = "R";
+	static private final String SQL_SELECTMEDIALIST = "SELECT " + 
+										"l."+
+										"left join media_track_list mtl on (t.track_source_list_id=mtl.list_id and t.track_id=mtl.track_id) " +
+										"left join media_list ml on (mtl.list_id=ml.list_id) ";
 	static private final String SQL_SELECTMEDIA = "SELECT " + 
 										"t.track_id, " + 					//  1
 										"t.track_name, " +					//  2
@@ -932,19 +990,17 @@ public class DatabaseDataStore implements DataStore
 										"t.track_persistent_id, " +			//  9
 										"a.artist_name," +					// 10
 										"ll.location_url," +				// 11
-										"ll.mime_id," +				// 12
+										"ll.mime_id," +						// 12
 										"rl.location_url," +				// 13
-										"rl.mime_id, " +				// 14
-										"rl.location_size, " + // 15
-										"ll.location_size," + // 16
-										"ml.list_name," + // 17
-										"t.TRACK_ADD_TIMESTAMP," + // 18
-										"t.TRACK_AUDIT_TIMESTAMP," + // 19
-										"mtl.seq_nbr " + // 20
+										"rl.mime_id, " +					// 14
+										"rl.location_size, " + 				// 15
+										"ll.location_size," + 				// 16
+										"t.track_album_num," + 				// 17
+										"t.TRACK_ADD_TIMESTAMP," + 			// 18
+										"t.TRACK_AUDIT_TIMESTAMP," + 		// 19
+										"t.track_album " + 					// 20
 										"FROM media_track t " +
 										"inner join artist a on t.track_artist_id = a.artist_id " +
-										"left join media_track_list mtl on (t.track_source_list_id=mtl.list_id and t.track_id=mtl.track_id) " +
-										"left join media_list ml on (mtl.list_id=ml.list_id) " +
 										"left join media_track_location ll on (t.track_id = ll.track_id and ll.location_type = '" + URL_LOCATION_TYPE_LOCAL + "') " +
 										"left join media_track_location rl on (t.track_id = rl.track_id and rl.location_type = '" + URL_LOCATION_TYPE_REMOTE + "') ";
 	static private final int SQL_SELECT_TRACK_ID_POS = 1;
@@ -953,7 +1009,6 @@ public class DatabaseDataStore implements DataStore
 	static private final int SQL_SELECT_TRACK_ARTIST_NAME_POS = 10;
 	static private final int SQL_SELECT_TRACK_ARTIST_ALIAS_ID_POS = 4;
 	static private final int SQL_SELECT_TRACK_ARTIST_ALIAS_NAME_POS = 0;
-	static private final int SQL_SELECT_TRACK_ALBUM_POS = 17;
 	static private final int SQL_SELECT_TRACK_ADD_TIMESTAMP_POS = 18;
 	static private final int SQL_SELECT_TRACK_AUDIT_TIMESTAMP_POS = 19;
 	static private final int SQL_SELECT_TRACK_LENGTH_MS_POS = 8;
@@ -964,5 +1019,6 @@ public class DatabaseDataStore implements DataStore
 	static private final int SQL_SELECT_TRACK_MIME_TYPE_ID_LOCAL_POS = 12;
 	static private final int SQL_SELECT_TRACK_URL_REMOTE_POS = 13;
 	static private final int SQL_SELECT_TRACK_MIME_TYPE_ID_REMOTE_POS = 14;
-	static private final int SQL_SELECT_TRACK_ALBUM_TRACK_NO_POS = 20;
+	static private final int SQL_SELECT_TRACK_ALBUM_TRACK_NO_POS = 17;
+	static private final int SQL_SELECT_TRACK_ALBUM = 20;
 }

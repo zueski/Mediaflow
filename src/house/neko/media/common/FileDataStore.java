@@ -152,6 +152,11 @@ public class FileDataStore implements DataStore
 		}
 	}
 	
+	public void putMediaList(MediaList l)
+	{
+		
+	}
+	
 	public void setArtwork(Media m, String mimeType, BufferedImage image, int index) { }
 	
 	public MimeType getMimeTypeByFileExtension(String extension)
