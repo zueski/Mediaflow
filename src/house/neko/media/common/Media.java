@@ -521,5 +521,6 @@ public class Media implements java.io.Serializable
 	public static final String ARTIST = "Artist";
 	public static final String ALBUM = "Album";
 	public static final String DATEADDED = "Date Added";
-	public static final String[] COLUMNS = { NAME, ARTIST, ALBUM, DATEADDED };
+	public static final String TRACKNUM = "Track";
+	public static final String[] COLUMNS = { NAME, ARTIST, ALBUM, DATEADDED, TRACKNUM };
 }

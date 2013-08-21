@@ -180,6 +180,9 @@ public class DatabaseDataStore implements DataStore
 		m.setName(rs.getString(SQL_SELECT_TRACK_NAME_POS));
 		m.setArtist(rs.getString(SQL_SELECT_TRACK_ARTIST_NAME_POS));
 		m.setAlbum(rs.getString(SQL_SELECT_TRACK_ALBUM));
+		int t = rs.getInt(SQL_SELECT_TRACK_ALBUM_TRACK_NO_POS);
+		if(!rs.wasNull())
+		{	m.setTrackNumber(t); }
 		SETLOCATIONS:{
 			String localURL = rs.getString(SQL_SELECT_TRACK_URL_LOCAL_POS);
 			if(localURL != null)
@@ -354,9 +357,18 @@ public class DatabaseDataStore implements DataStore
 				{
 					if(log.isTraceEnabled())
 					{	log.trace("Need to update base " + m.getID() + " to database"); }
-					PreparedStatement s = _conn.prepareStatement("update media_track set track_name=?,track_audit_timestamp=CURRENT_TIMESTAMP where track_id = ?");
+					PreparedStatement s = _conn.prepareStatement("update media_track set track_name=?,track_artist_id=?,track_artist_alias_id=?,track_album=?,track_album_num=?,track_audit_timestamp=CURRENT_TIMESTAMP where track_id = ?");
 					s.setString(1, m.getName());
-					s.setLong(3, trackid);
+					s.setInt(2, getArtistID(m, _conn));
+					s.setInt(3, getArtistAliasID(m, _conn));
+					s.setString(4, m.getAlbum());
+					if(m.getTrackNumber() != null)
+					{
+						s.setInt(5, m.getTrackNumber());
+					} else {
+						s.setNull(5, java.sql.Types.INTEGER);
+					}
+					s.setLong(6, trackid);
 					s.executeUpdate();
 					s.close();
 				}
@@ -732,6 +744,7 @@ public class DatabaseDataStore implements DataStore
 		{
 			artistID = rs.getInt(1);
 			rs.close();
+			cacheArtistID.put(m.getArtist(), artistID);
 		} else {
 			rs.close();
 			if(insertArtistStatement == null)
@@ -846,7 +859,7 @@ public class DatabaseDataStore implements DataStore
 		public void run()
 		{
 			loadAllMedia();
-			loadAllMediaList();
+			//loadAllMediaList();
 			_is_loaded = true;
 			library.forceUpdate();
 		}

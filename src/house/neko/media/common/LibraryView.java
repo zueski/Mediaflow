@@ -49,6 +49,8 @@ public class LibraryView extends Observable implements java.util.Observer
 					columns[i] = Media.ARTIST;
 				} else if(Media.ALBUM.equalsIgnoreCase(columns[i])) {
 					columns[i] = Media.ALBUM;
+				} else if(Media.TRACKNUM.equalsIgnoreCase(columns[i])) {
+					columns[i] = Media.TRACKNUM;
 				} else if(Media.DATEADDED.equalsIgnoreCase(columns[i])) {
 					columns[i] = Media.DATEADDED;
 				}
@@ -185,6 +187,8 @@ public class LibraryView extends Observable implements java.util.Observer
 					o[i][j] = m.getArtist();
 				} else if(cn[j] == Media.ALBUM) {
 					o[i][j] = m.getAlbum();
+				} else if(cn[j] == Media.TRACKNUM) {
+					o[i][j] = m.getTrackNumber();
 				} else if(cn[j] == Media.DATEADDED) {
 					o[i][j] = m.getAddedDate();
 				} else {

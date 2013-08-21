@@ -41,6 +41,7 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 	private JTextField artistField;
 	private JTextField artistAliasField;
 	private JTextField albumField;
+	private JTextField trackField;
 	private JButton cancelButton;
 	private JButton okayButton;
 	
@@ -51,7 +52,7 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 		this.slave = slave;
 		this.media = media;
 		setMinimumSize(new Dimension(150, 100));
-		setSize(new Dimension(450, 400));
+		setSize(new Dimension(650, 300));
 
 		Container c = getContentPane();
 		GridBagLayout gridbag = new GridBagLayout();
@@ -64,12 +65,12 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 		
 		
 		addLabel(new JLabel("Artist"), gridbag, gc, 0, ++y);
-		artistAliasField = new JTextField(media.getArtist());
-		addField(artistAliasField, gridbag, gc, 3, y);
+		artistField = new JTextField(media.getArtist());
+		addField(artistField, gridbag, gc, 3, y);
 		
 		addLabel(new JLabel("Artist Alias"), gridbag, gc, 0, ++y);
-		artistField = new JTextField(media.getArtistAlias());
-		addField(artistField, gridbag, gc, 3, y);
+		artistAliasField = new JTextField(media.getArtistAlias());
+		addField(artistAliasField, gridbag, gc, 3, y);
 		
 		addLabel(new JLabel("Title"), gridbag, gc, 0, ++y);
 		nameField = new JTextField(media.getName());
@@ -78,6 +79,11 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 		addLabel(new JLabel("Album"), gridbag, gc, 0, ++y);
 		albumField = new JTextField(media.getAlbum());
 		addField(albumField, gridbag, gc, 3, y);
+
+		addLabel(new JLabel("Track"), gridbag, gc, 0, ++y);
+		Integer track = media.getTrackNumber();
+		trackField = new JTextField(track != null ? track.toString() : "");
+		addField(trackField, gridbag, gc, 3, y);
 		
 		addLabel(new JLabel("Author"), gridbag, gc, 0, ++y);
 		authorField = new JTextField(media.getAuthor());
@@ -140,7 +146,16 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 		{	log.trace("Action " + e.getActionCommand()); }
 		if(UPDATE_ACTION.equals(e.getActionCommand()))
 		{
-			
+			media.setName(nameField.getText());
+			media.setAuthor(authorField.getText());
+			media.setArtist(artistField.getText());
+			media.setArtistAlias(artistAliasField.getText());
+			media.setAlbum(albumField.getText());
+			try
+			{
+				media.setTrackNumber(Integer.parseInt(trackField.getText()));
+			} catch(NumberFormatException nfe) { }
+			setVisible(false);
 		} else if(CANCEL_ACTION.equals(e.getActionCommand())) {
 			setVisible(false);
 		}
