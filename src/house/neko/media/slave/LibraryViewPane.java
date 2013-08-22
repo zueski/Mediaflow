@@ -104,7 +104,7 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 		
 		tableSorter.setTableHeader(table.getTableHeader());
 		
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		ListSelectionModel rowSM = table.getSelectionModel();
 		rowSM.addListSelectionListener(this);
 		
@@ -293,20 +293,33 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 		}
 	}
 	
+	public void refreshView()
+	{	libraryView.refresh(); }
+	
 	public void openInfoForSelected()
 	{
-		int selectedRow = table.getSelectedRow();
-		if(selectedRow < 0)
+		if(table.getSelectedRowCount() > 1)
 		{
+			int[] selectedRows = table.getSelectedRows();
+			Media[] m = new Media[selectedRows.length];
+			for(int i = 0; i < selectedRows.length; i++)
+			{	m[i] = (Media) result.results[tableSorter.modelIndex(selectedRows[i])][result.mediaIndex]; }
+			MediaTracksInfoDialog d = new MediaTracksInfoDialog(slave, m);
+			d.setVisible(true);
+		} else {
+			int selectedRow = table.getSelectedRow();
+			if(selectedRow < 0)
+			{
+				if(log.isTraceEnabled())
+				{	log.trace("Skipping opening info for selected, nothing selected?!"); }
+				return; 
+			}
+			Media m = (Media) result.results[tableSorter.modelIndex(selectedRow)][result.mediaIndex];
 			if(log.isTraceEnabled())
-			{	log.trace("Skipping opening info for selected, nothing selected?!"); }
-			return; 
+			{	log.trace("Opening info dialog for track " + m); }
+			MediaTrackInfoDialog d = new MediaTrackInfoDialog(slave, m);
+			d.setVisible(true);
 		}
-		Media m = (Media) result.results[tableSorter.modelIndex(selectedRow)][result.mediaIndex];
-		if(log.isTraceEnabled())
-		{	log.trace("Opening info dialog for track " + m); }
-		MediaTrackInfoDialog d = new MediaTrackInfoDialog(slave, m);
-		d.setVisible(true);
 	}
 	
 	public Media[] getSelectedMedia()
@@ -383,7 +396,7 @@ public class LibraryViewPane extends JScrollPane implements TableModel, ListSele
 			AbstractButton aButton = (AbstractButton) e.getSource();
 			boolean selected = aButton.getModel().isSelected();
 			if(log.isTraceEnabled()) { log.trace("refreshing LibraryViewPane"); }
-			setResult(libraryView.getVisibleMedia());
+			refreshView();
 		}
 	}
 	

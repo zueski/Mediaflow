@@ -373,6 +373,9 @@ public class Slave extends JFrame implements ActionListener, WindowListener
 	public void windowClosed(WindowEvent e) { }
 	// end WindowListener
 	
+	public void refreshView()
+	{	view.refreshView(); }
+	
 	public void shutdown()
 	{
 		setVisible(false); 

@@ -126,6 +126,8 @@ public class LibraryView extends Observable implements java.util.Observer
 	
 	public void applySimpleFilter(String filter)
 	{
+		if(filter != null)
+		{	filter = filter.toLowerCase(); }
 		if(log.isDebugEnabled()) { log.debug("applySimpleFilter: " + filter); }
 		Media[] list = library.getAllMedia();
 		Vector<Media> found = new Vector<Media>(list.length);
@@ -214,6 +216,12 @@ public class LibraryView extends Observable implements java.util.Observer
 		if(log.isDebugEnabled()) { log.debug("Clearing filter"); }
 		setChanged();
 		notifyObservers();
+	}
+	
+	public void refresh()
+	{
+		setChanged();
+		notifyObservers(null);
 	}
 	
 	public void update(java.util.Observable o, Object arg)

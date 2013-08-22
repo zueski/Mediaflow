@@ -24,7 +24,7 @@ import javax.swing.JLabel;
 
 import org.apache.commons.logging.Log;
 
-public class MediaTrackInfoDialog extends JFrame implements ActionListener
+public class MediaTracksInfoDialog extends JFrame implements ActionListener
 {
 	private static final long serialVersionUID = 60L;
 	
@@ -32,22 +32,22 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 	private static final String CANCEL_ACTION = "C";
 
 	private Slave slave;
-	private Media media;
+	private Media[] media;
 	
 	private Log log = null;
 	
-	private JTextField nameField;
-	private JTextField authorField;
-	private JTextField artistField;
-	private JTextField artistAliasField;
-	private JTextField albumField;
-	private JTextField trackField;
+	private JTextField[] nameField;
+	private JTextField[] authorField;
+	private JTextField[] artistField;
+	private JTextField[] artistAliasField;
+	private JTextField[] albumField;
+	private JTextField[] trackField;
 	private JButton cancelButton;
 	private JButton okayButton;
 	
-	public MediaTrackInfoDialog(Slave slave, Media media)
+	public MediaTracksInfoDialog(Slave slave, Media[] media)
 	{
-		super("Media Track: " + media.getName());
+		super("Media Tracks");
 		this.log = ConfigurationManager.getLog(getClass());
 		this.slave = slave;
 		this.media = media;
@@ -62,59 +62,58 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 		gc.ipadx = 7;
 		
 		int y = 0;
+		int row = 0;
 		
+		nameField = new JTextField[media.length];
+		authorField = new JTextField[media.length];
+		artistField = new JTextField[media.length];
+		artistAliasField = new JTextField[media.length];
+		albumField = new JTextField[media.length];
+		nameField = new JTextField[media.length];
+		trackField = new JTextField[media.length];
 		
-		addLabel(new JLabel("Artist"), gridbag, gc, 0, ++y);
-		artistField = new JTextField(media.getArtist());
-		addField(artistField, gridbag, gc, 3, y);
+		addLabel(new JLabel("Artist"), gridbag, gc, 0, row);
+		addLabel(new JLabel("Artist Alias"), gridbag, gc, 1, row);
+		addLabel(new JLabel("Title"), gridbag, gc, 2, row);
+		addLabel(new JLabel("Album"), gridbag, gc, 3, row);
+		addLabel(new JLabel("Track"), gridbag, gc, 4, row);
+		addLabel(new JLabel("Author"), gridbag, gc, 5, row);
 		
-		addLabel(new JLabel("Artist Alias"), gridbag, gc, 0, ++y);
-		artistAliasField = new JTextField(media.getArtistAlias());
-		addField(artistAliasField, gridbag, gc, 3, y);
-		
-		addLabel(new JLabel("Title"), gridbag, gc, 0, ++y);
-		nameField = new JTextField(media.getName());
-		addField(nameField, gridbag, gc, 3, y);
-		
-		addLabel(new JLabel("Album"), gridbag, gc, 0, ++y);
-		albumField = new JTextField(media.getAlbum());
-		addField(albumField, gridbag, gc, 3, y);
-
-		addLabel(new JLabel("Track"), gridbag, gc, 0, ++y);
-		Integer track = media.getTrackNumber();
-		trackField = new JTextField(track != null ? track.toString() : "");
-		addField(trackField, gridbag, gc, 3, y);
-		
-		addLabel(new JLabel("Author"), gridbag, gc, 0, ++y);
-		authorField = new JTextField(media.getAuthor());
-		addField(authorField, gridbag, gc, 3, y);
-		
-		addLabel(new JLabel("Interal ID"), gridbag, gc, 2, ++y);
-		addLabel(new JLabel(media.getID()), gridbag, gc, 3, y);
-		addLabel(new JLabel("Local ID"), gridbag, gc, 2, ++y);
+		for(int i = 0; i < media.length; i++)
 		{
-			Long lid = media.getLocalID();
-			if(lid != null)
-			{
-				addLabel(new JLabel(Long.toString(lid)), gridbag, gc, 3, y);
-			} else {
-				addLabel(new JLabel("NaN"), gridbag, gc, 3, y);
-			}
+			row++;
+			if(log.isTraceEnabled())
+			{	log.trace("Adding (" + row + ") to dialog: " + media[i]); }
+			
+			artistField[i] = new JTextField(media[i].getArtist());
+			addField(artistField[i], gridbag, gc, 0, row);
+			
+			artistAliasField[i] = new JTextField(media[i].getArtistAlias());
+			addField(artistAliasField[i], gridbag, gc, 1, row);
+			
+			nameField[i] = new JTextField(media[i].getName());
+			addField(nameField[i], gridbag, gc, 2, row);
+			
+			albumField[i] = new JTextField(media[i].getAlbum());
+			addField(albumField[i], gridbag, gc, 3, row);
+
+			Integer track = media[i].getTrackNumber();
+			trackField[i] = new JTextField(track != null ? track.toString() : "");
+			addField(trackField[i], gridbag, gc, 4, row);
+			
+			authorField[i] = new JTextField(media[i].getAuthor());
+			addField(authorField[i], gridbag, gc, 5, row);
 		}
-		
-		addLabel(new JLabel("URL"), gridbag, gc, 2, ++y);
-		MediaLocation l = media.getLocation();
-		addLabel(new JLabel(l != null ? l.getLocationURLString() : ""), gridbag, gc, 3, y);
 		
 		okayButton = new JButton("  OK  ");
 		okayButton.setActionCommand(UPDATE_ACTION);
 		okayButton.addActionListener(this);
-		addComponent(okayButton, gridbag, gc, 2, ++y);
+		addComponent(okayButton, gridbag, gc, 2, ++row);
 		
 		cancelButton= new JButton("  Cancel  ");
 		cancelButton.setActionCommand(CANCEL_ACTION);
 		cancelButton.addActionListener(this);
-		addComponent(cancelButton, gridbag, gc, 3, y);
+		addComponent(cancelButton, gridbag, gc, 3, row);
 		
 		
 	}
@@ -129,13 +128,13 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 	
 	private void addLabel(JLabel label, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)
 	{
-		gc.gridwidth = GridBagConstraints.RELATIVE;
+		gc.gridx = x;
+		gc.gridy = y;
 		addComponent(label, gridbag, gc, x, y);
 	}
 	
 	private void addField(JTextField field, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)
 	{
-		gc.gridwidth = GridBagConstraints.REMAINDER;
 		gc.fill = GridBagConstraints.HORIZONTAL;
 		addComponent(field, gridbag, gc, x, y);
 	}
@@ -146,15 +145,18 @@ public class MediaTrackInfoDialog extends JFrame implements ActionListener
 		{	log.trace("Action " + e.getActionCommand()); }
 		if(UPDATE_ACTION.equals(e.getActionCommand()))
 		{
-			media.setName(nameField.getText());
-			media.setAuthor(authorField.getText());
-			media.setArtist(artistField.getText());
-			media.setArtistAlias(artistAliasField.getText());
-			media.setAlbum(albumField.getText());
-			try
+			for(int i = 0; i < media.length; i++)
 			{
-				media.setTrackNumber(Integer.parseInt(trackField.getText()));
-			} catch(NumberFormatException nfe) { }
+				media[i].setName(nameField[i].getText());
+				media[i].setAuthor(authorField[i].getText());
+				media[i].setArtist(artistField[i].getText());
+				media[i].setArtistAlias(artistAliasField[i].getText());
+				media[i].setAlbum(albumField[i].getText());
+				try
+				{
+					media[i].setTrackNumber(Integer.parseInt(trackField[i].getText()));
+				} catch(NumberFormatException nfe) { }
+			}
 			setVisible(false);
 			slave.refreshView();
 		} else if(CANCEL_ACTION.equals(e.getActionCommand())) {
