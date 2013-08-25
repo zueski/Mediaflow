@@ -52,7 +52,8 @@ CREATE TABLE public.media_track_location (
 	location_type varchar(1) not null,
 	mime_id int4 NULL,
 	location_size int8 NULL,
-	location_url	varchar(2048) not null
+	location_url	varchar(2048) not null,
+	is_valid char(1) not null default 'T'
 	);
 CREATE TABLE public.media_track_list ( 
 	list_id 	int8 NOT NULL DEFAULT nextval('media_track_list_list_id_seq'::text),

@@ -483,7 +483,15 @@ public class Media implements java.io.Serializable
 			isBaseDirty = true;
 		}
 	}
-
+	
+	public void setLocationValid(MediaLocation l, boolean isValid)
+	{
+		if(l.isLocationValid() != isValid)
+		{
+			l.setLocationValid(isValid);
+			isContentDirty = true;
+		}
+	}
 	
 	public boolean isDirty()
 	{	return isUserDirty || isContentDirty || isBaseDirty; }

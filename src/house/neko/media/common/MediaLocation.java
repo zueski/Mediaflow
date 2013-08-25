@@ -19,12 +19,14 @@ public class MediaLocation implements java.io.Serializable
 	private String locationURLString;
 	private Long bytecount;
 	private MimeType mimeType;
+	private boolean locationValid;
 	
 	public MediaLocation()
 	{
 		locationURLString = null;
 		mimeType = null;
 		bytecount = null;
+		locationValid = false;
 	}
 	
 	public void setLocationURLString(String locationURLString)
@@ -41,6 +43,12 @@ public class MediaLocation implements java.io.Serializable
 	{	this.bytecount = bytecount; }
 	public Long getSize()
 	{	return this.bytecount; }
+	
+	public boolean isLocationValid()
+	{	return this.locationValid; }
+	public void setLocationValid(boolean locationValid)
+	{	this.locationValid = locationValid; }
+	
 	
 	/**
 	 *

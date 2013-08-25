@@ -1,5 +1,8 @@
 package house.neko.media.common;
 
+import house.neko.media.common.datastore.FileReorgAction;
+import house.neko.media.common.datastore.FileCheckAction;
+
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Vector;
@@ -192,6 +195,7 @@ public class DatabaseDataStore implements DataStore
 				MediaLocation localLocation = new MediaLocation();
 				localLocation.setLocationURLString(localURL);
 				localLocation.setMimeType(getMimeTypeByID(rs.getInt(SQL_SELECT_TRACK_MIME_TYPE_ID_LOCAL_POS), rs.getStatement().getConnection()));
+				localLocation.setLocationValid("T".equals(rs.getString(SQL_SELECT_TRACK_IS_VALID_LOCAL)));
 				long size = rs.getLong(SQL_SELECT_TRACK_SIZE_LOCAL_POS);
 				if(!rs.wasNull())
 				{	localLocation.setSize(size); }
@@ -205,6 +209,7 @@ public class DatabaseDataStore implements DataStore
 				MediaLocation remoteLocation = new MediaLocation();
 				remoteLocation.setLocationURLString(remoteURL);
 				remoteLocation.setMimeType(getMimeTypeByID(rs.getInt(SQL_SELECT_TRACK_MIME_TYPE_ID_REMOTE_POS), rs.getStatement().getConnection()));
+				remoteLocation.setLocationValid("T".equals(rs.getString(SQL_SELECT_TRACK_IS_VALID_REMOTE)));
 				long size = rs.getLong(SQL_SELECT_TRACK_SIZE_REMOTE_POS);
 				if(!rs.wasNull())
 				{	remoteLocation.setSize(size); }
@@ -447,7 +452,7 @@ public class DatabaseDataStore implements DataStore
 	{
 		if(m.isContentDirty())
 		{	// avoid most db calls
-			PreparedStatement s = c.prepareStatement("update media_track_location set location_url=?,mime_id=?,location_size=? where track_id=? and location_type=?");
+			PreparedStatement s = c.prepareStatement("update media_track_location set location_url=?,mime_id=?,location_size=?,is_valid=? where track_id=? and location_type=?");
 			boolean updateLocal = m.getLocalLocation() != null;
 			boolean updateRemote = m.getRemoteLocation() != null;
 			if(updateLocal)
@@ -455,8 +460,8 @@ public class DatabaseDataStore implements DataStore
 				MimeType mt = m.getLocalLocation().getMimeType();
 				if(mt == null)
 				{	mt = getMimeTypeByFileExtension(m.getLocalLocation().getLocationURLString()); }
-				if(log.isTraceEnabled())
-				{	log.trace("Updating local location to " + mt + " with URL " + m.getLocalLocation().getLocationURLString()); }
+				if(log.isDebugEnabled())
+				{	log.debug("Updating local location to (" +  m.getLocalLocation().isLocationValid() + ") " + mt + " with URL " + m.getLocalLocation().getLocationURLString()); }
 				s.setString(1, m.getLocalLocation().getLocationURLString());
 				if(mt == null || mt.getLocalID() == null)
 				{
@@ -470,8 +475,9 @@ public class DatabaseDataStore implements DataStore
 				} else {
 					s.setNull(3, Types.BIGINT);
 				}
-				s.setLong(4, m.getLocalID());
-				s.setString(5, URL_LOCATION_TYPE_LOCAL);
+				s.setString(4, m.getLocalLocation().isLocationValid() ? "T" : "F");
+				s.setLong(5, m.getLocalID());
+				s.setString(6, URL_LOCATION_TYPE_LOCAL);
 				s.executeUpdate();
 				updateLocal = false;
 			} 
@@ -481,7 +487,7 @@ public class DatabaseDataStore implements DataStore
 				if(mt == null)
 				{	mt = getMimeTypeByFileExtension(m.getRemoteLocation().getLocationURLString()); }
 				if(log.isTraceEnabled())
-				{	log.trace("Updating remote location to " + mt + " with URL " + m.getRemoteLocation().getLocationURLString()); }
+				{	log.trace("Updating remote location to (" +  m.getRemoteLocation().isLocationValid() + ") " + mt + " with URL " + m.getRemoteLocation().getLocationURLString()); }
 				s.setString(1, m.getRemoteLocation().getLocationURLString());
 				if(mt == null || mt.getLocalID() == null)
 				{
@@ -495,6 +501,7 @@ public class DatabaseDataStore implements DataStore
 				} else {
 					s.setNull(3, Types.BIGINT);
 				}
+				s.setString(4, m.getRemoteLocation().isLocationValid() ? "T" : "F");
 				s.setLong(4, m.getLocalID());
 				s.setString(5, URL_LOCATION_TYPE_REMOTE);
 				s.executeUpdate();
@@ -813,7 +820,10 @@ public class DatabaseDataStore implements DataStore
 		}
 	}
 	
-	private File getDefaultMediaFile(File base, Media m)
+	public void submitTask(Runnable r)
+	{	library.submitTask(r); }
+	
+	public File getDefaultMediaFile(File base, Media m)
 	{
 		try
 		{
@@ -901,72 +911,14 @@ public class DatabaseDataStore implements DataStore
 	
 	public Action[] getActions()
 	{
-		Action[] a = new Action[1];
-		a[0] = new FileReorgAction(this);
+		Action[] a = new Action[2];
+		a[0] = new FileReorgAction(this, config);
+		a[1] = new FileCheckAction(this, config);
 		return a;
 	}
 	
 	
-	public class FileReorgAction extends AbstractAction implements Runnable
-	{
-		DatabaseDataStore store;
-		final static private String NAME = "Reorganize Library";
-		
-		public FileReorgAction(DatabaseDataStore store)
-		{
-			super(NAME);
-			putValue(super.LONG_DESCRIPTION, NAME);
-			putValue(super.SHORT_DESCRIPTION, NAME);
-			this.store = store;
-		}
-		
-		public void actionPerformed(ActionEvent e)
-		{
-			if(log.isDebugEnabled()) { log.trace("queuing Library Reorg"); }
-			library.submitTask(this);
-		}
-		/*
-		This function will do the following actions:
-			1.  create a new top level folder
-			2.  move each file to this new folder
-			3.  rename the old folder to the new
-			4.  remove empty dirs from old folder (including old folder)
-		*/
-		public void run()
-		{
-			if(log.isDebugEnabled()) { log.debug("Reorg - Started"); }
-			Connection c = null;
-			REORG:try
-			{
-				java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("_yyyyMMdd_HHmmss");
-				File oldBase = new File(config.getString("MusicBasePath"));
-				File newBase = new File(oldBase.getParentFile(), oldBase.getName() + dateFormat.format(new java.util.Date()));
-				if(log.isDebugEnabled()) { log.debug("Reorg - moving " + oldBase.getAbsolutePath() + " to " + newBase.getAbsolutePath()); }
-				if(!newBase.mkdirs())
-				{
-					log.error("Unable to create new dir " + newBase.getAbsolutePath());
-					break REORG;
-				}
-				for(Media m : getAllMedia())
-				{
-					MediaLocation l = m.getLocation();
-					if(l == null)
-					{	continue; }
-					File of = l.getFile();
-					if(of == null)
-					{	continue; }
-					File nf = getDefaultMediaFile(newBase, m);
-					File nfol = getDefaultMediaFile(m);
-					if(log.isDebugEnabled()) { log.debug("Reorg - would move " + of.getAbsolutePath() + " to " + nf.getAbsolutePath() + "(" + nfol.getAbsolutePath() + ")"); }
-				}
-			} catch(Exception e) {
-				log.error("Reorg - Unable to complete", e);
-			} finally {
-				
-			}
-			if(log.isDebugEnabled()) { log.debug("Reorg - Complete"); }
-		}
-	}
+	
 	
 	/**
 	 *
@@ -1011,7 +963,9 @@ public class DatabaseDataStore implements DataStore
 										"t.track_album_num," + 				// 17
 										"t.TRACK_ADD_TIMESTAMP," + 			// 18
 										"t.TRACK_AUDIT_TIMESTAMP," + 		// 19
-										"t.track_album " + 					// 20
+										"t.track_album," + 					// 20
+										"ll.is_valid," +					// 21
+										"rl.is_valid " +					// 22
 										"FROM media_track t " +
 										"inner join artist a on t.track_artist_id = a.artist_id " +
 										"left join media_track_location ll on (t.track_id = ll.track_id and ll.location_type = '" + URL_LOCATION_TYPE_LOCAL + "') " +
@@ -1034,4 +988,6 @@ public class DatabaseDataStore implements DataStore
 	static private final int SQL_SELECT_TRACK_MIME_TYPE_ID_REMOTE_POS = 14;
 	static private final int SQL_SELECT_TRACK_ALBUM_TRACK_NO_POS = 17;
 	static private final int SQL_SELECT_TRACK_ALBUM = 20;
+	static private final int SQL_SELECT_TRACK_IS_VALID_LOCAL = 21;
+	static private final int SQL_SELECT_TRACK_IS_VALID_REMOTE = 22;
 }

@@ -17,7 +17,10 @@ import java.awt.Container;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
 
@@ -52,9 +55,10 @@ public class MediaTracksInfoDialog extends JFrame implements ActionListener
 		this.slave = slave;
 		this.media = media;
 		setMinimumSize(new Dimension(150, 100));
-		setSize(new Dimension(650, 300));
+		//setSize(new Dimension(650, 300));
 
-		Container c = getContentPane();
+		JPanel c = new JPanel();
+		c.setAlignmentX(Component.LEFT_ALIGNMENT);
 		GridBagLayout gridbag = new GridBagLayout();
 		GridBagConstraints gc = new GridBagConstraints();
 		c.setLayout(gridbag);
@@ -72,12 +76,12 @@ public class MediaTracksInfoDialog extends JFrame implements ActionListener
 		nameField = new JTextField[media.length];
 		trackField = new JTextField[media.length];
 		
-		addLabel(new JLabel("Artist"), gridbag, gc, 0, row);
-		addLabel(new JLabel("Artist Alias"), gridbag, gc, 1, row);
-		addLabel(new JLabel("Title"), gridbag, gc, 2, row);
-		addLabel(new JLabel("Album"), gridbag, gc, 3, row);
-		addLabel(new JLabel("Track"), gridbag, gc, 4, row);
-		addLabel(new JLabel("Author"), gridbag, gc, 5, row);
+		addLabel(c, new JLabel("Artist"), gridbag, gc, 0, row);
+		addLabel(c, new JLabel("Artist Alias"), gridbag, gc, 1, row);
+		addLabel(c, new JLabel("Title"), gridbag, gc, 2, row);
+		addLabel(c, new JLabel("Album"), gridbag, gc, 3, row);
+		addLabel(c, new JLabel("Track"), gridbag, gc, 4, row);
+		addLabel(c, new JLabel("Author"), gridbag, gc, 5, row);
 		
 		for(int i = 0; i < media.length; i++)
 		{
@@ -86,57 +90,59 @@ public class MediaTracksInfoDialog extends JFrame implements ActionListener
 			{	log.trace("Adding (" + row + ") to dialog: " + media[i]); }
 			
 			artistField[i] = new JTextField(media[i].getArtist());
-			addField(artistField[i], gridbag, gc, 0, row);
+			addField(c, artistField[i], gridbag, gc, 0, row);
 			
 			artistAliasField[i] = new JTextField(media[i].getArtistAlias());
-			addField(artistAliasField[i], gridbag, gc, 1, row);
+			addField(c, artistAliasField[i], gridbag, gc, 1, row);
 			
 			nameField[i] = new JTextField(media[i].getName());
-			addField(nameField[i], gridbag, gc, 2, row);
+			addField(c, nameField[i], gridbag, gc, 2, row);
 			
 			albumField[i] = new JTextField(media[i].getAlbum());
-			addField(albumField[i], gridbag, gc, 3, row);
+			addField(c, albumField[i], gridbag, gc, 3, row);
 
 			Integer track = media[i].getTrackNumber();
 			trackField[i] = new JTextField(track != null ? track.toString() : "");
-			addField(trackField[i], gridbag, gc, 4, row);
+			addField(c, trackField[i], gridbag, gc, 4, row);
 			
 			authorField[i] = new JTextField(media[i].getAuthor());
-			addField(authorField[i], gridbag, gc, 5, row);
+			addField(c, authorField[i], gridbag, gc, 5, row);
 		}
 		
 		okayButton = new JButton("  OK  ");
 		okayButton.setActionCommand(UPDATE_ACTION);
 		okayButton.addActionListener(this);
-		addComponent(okayButton, gridbag, gc, 2, ++row);
+		addComponent(c, okayButton, gridbag, gc, 2, ++row);
 		
 		cancelButton= new JButton("  Cancel  ");
 		cancelButton.setActionCommand(CANCEL_ACTION);
 		cancelButton.addActionListener(this);
-		addComponent(cancelButton, gridbag, gc, 3, row);
+		addComponent(c, cancelButton, gridbag, gc, 3, row);
 		
 		
+		getContentPane().add(new JScrollPane(c, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+		pack();
 	}
 	
-	private void addComponent(Component c, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)
+	private void addComponent(Container p, Component c, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)
 	{
 		gc.gridx = x;
 		gc.gridy = y;
 		gridbag.setConstraints(c, gc);
-		getContentPane().add(c);
+		p.add(c);
 	}
 	
-	private void addLabel(JLabel label, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)
+	private void addLabel(Container p, JLabel label, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)
 	{
 		gc.gridx = x;
 		gc.gridy = y;
-		addComponent(label, gridbag, gc, x, y);
+		addComponent(p, label, gridbag, gc, x, y);
 	}
 	
-	private void addField(JTextField field, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)
+	private void addField(Container p, JTextField field, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)
 	{
 		gc.fill = GridBagConstraints.HORIZONTAL;
-		addComponent(field, gridbag, gc, x, y);
+		addComponent(p, field, gridbag, gc, x, y);
 	}
 	
 	public void actionPerformed(ActionEvent e)
