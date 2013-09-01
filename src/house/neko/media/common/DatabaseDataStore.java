@@ -323,8 +323,30 @@ public class DatabaseDataStore implements DataStore
 			rs = s.executeQuery();
 			
 			Vector<MediaList> mlist = new Vector<MediaList>();
+			long lastMediaListID = -1L;
+			MediaList currList = null;
+			Vector<MediaListEntry> tracks = new Vector<MediaListEntry>(30);
 			while(rs.next())
-			{   mlist.add(mapResultSetToMediaList(rs)); }
+			{
+				long mediaListID = rs.getLong(SQL_SELECTMEDIALIST_LIST_ID_POS);
+				if(lastMediaListID != mediaListID)
+				{
+					if(lastMediaListID > -1L)
+					{
+						if(log.isTraceEnabled())
+						{	log.trace("MediaListLoad - adding " + currList.getName() + " (" + currList.getLocalID() + ")"); }
+						currList.setTrackList(tracks.toArray(new MediaListEntry[tracks.size()]));
+						mlist.add(currList);
+						tracks = new Vector<MediaListEntry>(30);
+					}
+					currList = new MediaList();
+					currList.setLocalID(mediaListID);
+					currList.setID(Long.toString(mediaListID));
+					currList.setName(rs.getString(SQL_SELECTMEDIALIST_LIST_NAME_POS));
+				}
+				tracks.add(new MediaListEntry(library.getMedia(rs.getString(SQL_SELECTMEDIALIST_TRACK_PERSISTENT_ID_POS)), rs.getInt(SQL_SELECTMEDIALIST_SEQ_NBR_POS)));
+				lastMediaListID = mediaListID;
+			}
 			rs.close();
 			s.close();
 			
@@ -869,7 +891,7 @@ public class DatabaseDataStore implements DataStore
 		public void run()
 		{
 			loadAllMedia();
-			//loadAllMediaList();
+			loadAllMediaList();
 			_is_loaded = true;
 			library.forceUpdate();
 		}
@@ -937,13 +959,34 @@ public class DatabaseDataStore implements DataStore
 		}	
 	}
 	
-	static private final String URL_LOCATION_TYPE_LOCAL = "L";
-	static private final String URL_LOCATION_TYPE_REMOTE = "R";
-	static private final String SQL_SELECTMEDIALIST = "SELECT " + 
-										"l."+
-										"left join media_track_list mtl on (t.track_source_list_id=mtl.list_id and t.track_id=mtl.track_id) " +
-										"left join media_list ml on (mtl.list_id=ml.list_id) ";
-	static private final String SQL_SELECTMEDIA = "SELECT " + 
+	private final String URL_LOCATION_TYPE_LOCAL = "L";
+	private final String URL_LOCATION_TYPE_REMOTE = "R";
+	private final String SQL_SELECTMEDIALIST = "SELECT " + 
+										"ml.list_id," +					//  1
+										"ml.list_name," +				//  2
+										"ml.list_artist_id," +			//  3
+										"ml.list_release_date," +		//  4
+										"ml.list_audit_user_id," +		//  5
+										"ml.list_modify_timestamp," +	//  6
+										"ml.list_create_timestamp," +	//  7
+										"mtl.seq_nbr," +				//  8
+										"mt.track_id," +				//  9
+										"mt.track_persistent_id " +		// 10
+										"from media_list ml " +
+										"inner join media_track_list mtl on (ml.list_id=mtl.list_id) " +
+										"inner join media_track mt on (mtl.track_id=mt.track_id) " +
+										"order by ml.list_id,mtl.seq_nbr,mt.track_id";
+	private final int SQL_SELECTMEDIALIST_LIST_ID_POS = 1;
+	private final int SQL_SELECTMEDIALIST_LIST_NAME_POS = 2;
+	private final int SQL_SELECTMEDIALIST_LIST_ARTIST_ID_POS = 3;
+	private final int SQL_SELECTMEDIALIST_LIST_RELEASE_DATE_POS = 4;
+	private final int SQL_SELECTMEDIALIST_LIST_AUDIT_USER_ID_DATE_POS = 5;
+	private final int SQL_SELECTMEDIALIST_LIST_MODIFY_TIMESTAMP_POS = 6;
+	private final int SQL_SELECTMEDIALIST_LIST_CREATE_TIMESTAMP_POS = 7;
+	private final int SQL_SELECTMEDIALIST_SEQ_NBR_POS = 8;
+	private final int SQL_SELECTMEDIALIST_TRACK_ID_POS = 9;
+	private final int SQL_SELECTMEDIALIST_TRACK_PERSISTENT_ID_POS = 10;
+	private final String SQL_SELECTMEDIA = "SELECT " + 
 										"t.track_id, " + 					//  1
 										"t.track_name, " +					//  2
 										"t.track_artist_id, "+				//  3
@@ -970,24 +1013,24 @@ public class DatabaseDataStore implements DataStore
 										"inner join artist a on t.track_artist_id = a.artist_id " +
 										"left join media_track_location ll on (t.track_id = ll.track_id and ll.location_type = '" + URL_LOCATION_TYPE_LOCAL + "') " +
 										"left join media_track_location rl on (t.track_id = rl.track_id and rl.location_type = '" + URL_LOCATION_TYPE_REMOTE + "') ";
-	static private final int SQL_SELECT_TRACK_ID_POS = 1;
-	static private final int SQL_SELECT_TRACK_NAME_POS = 2;
-	static private final int SQL_SELECT_TRACK_ARTIST_ID_POS = 3;
-	static private final int SQL_SELECT_TRACK_ARTIST_NAME_POS = 10;
-	static private final int SQL_SELECT_TRACK_ARTIST_ALIAS_ID_POS = 4;
-	static private final int SQL_SELECT_TRACK_ARTIST_ALIAS_NAME_POS = 0;
-	static private final int SQL_SELECT_TRACK_ADD_TIMESTAMP_POS = 18;
-	static private final int SQL_SELECT_TRACK_AUDIT_TIMESTAMP_POS = 19;
-	static private final int SQL_SELECT_TRACK_LENGTH_MS_POS = 8;
-	static private final int SQL_SELECT_TRACK_PERSISTENT_ID_POS = 9;
-	static private final int SQL_SELECT_TRACK_URL_LOCAL_POS = 11;
-	static private final int SQL_SELECT_TRACK_SIZE_LOCAL_POS = 16;
-	static private final int SQL_SELECT_TRACK_SIZE_REMOTE_POS = 15;
-	static private final int SQL_SELECT_TRACK_MIME_TYPE_ID_LOCAL_POS = 12;
-	static private final int SQL_SELECT_TRACK_URL_REMOTE_POS = 13;
-	static private final int SQL_SELECT_TRACK_MIME_TYPE_ID_REMOTE_POS = 14;
-	static private final int SQL_SELECT_TRACK_ALBUM_TRACK_NO_POS = 17;
-	static private final int SQL_SELECT_TRACK_ALBUM = 20;
-	static private final int SQL_SELECT_TRACK_IS_VALID_LOCAL = 21;
-	static private final int SQL_SELECT_TRACK_IS_VALID_REMOTE = 22;
+	private final int SQL_SELECT_TRACK_ID_POS = 1;
+	private final int SQL_SELECT_TRACK_NAME_POS = 2;
+	private final int SQL_SELECT_TRACK_ARTIST_ID_POS = 3;
+	private final int SQL_SELECT_TRACK_ARTIST_NAME_POS = 10;
+	private final int SQL_SELECT_TRACK_ARTIST_ALIAS_ID_POS = 4;
+	private final int SQL_SELECT_TRACK_ARTIST_ALIAS_NAME_POS = 0;
+	private final int SQL_SELECT_TRACK_ADD_TIMESTAMP_POS = 18;
+	private final int SQL_SELECT_TRACK_AUDIT_TIMESTAMP_POS = 19;
+	private final int SQL_SELECT_TRACK_LENGTH_MS_POS = 8;
+	private final int SQL_SELECT_TRACK_PERSISTENT_ID_POS = 9;
+	private final int SQL_SELECT_TRACK_URL_LOCAL_POS = 11;
+	private final int SQL_SELECT_TRACK_SIZE_LOCAL_POS = 16;
+	private final int SQL_SELECT_TRACK_SIZE_REMOTE_POS = 15;
+	private final int SQL_SELECT_TRACK_MIME_TYPE_ID_LOCAL_POS = 12;
+	private final int SQL_SELECT_TRACK_URL_REMOTE_POS = 13;
+	private final int SQL_SELECT_TRACK_MIME_TYPE_ID_REMOTE_POS = 14;
+	private final int SQL_SELECT_TRACK_ALBUM_TRACK_NO_POS = 17;
+	private final int SQL_SELECT_TRACK_ALBUM = 20;
+	private final int SQL_SELECT_TRACK_IS_VALID_LOCAL = 21;
+	private final int SQL_SELECT_TRACK_IS_VALID_REMOTE = 22;
 }

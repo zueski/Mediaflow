@@ -207,7 +207,12 @@ public final class MediaPlayer extends Observable
 					{	ain.close(); }
 					try
 					{
-						ain = AudioSystem.getAudioInputStream(currLocation.getInputStream()); 
+						if("x-m4a".equalsIgnoreCase(currLocation.getMimeType().getMimeSubType()))
+						{
+							ain = new net.sourceforge.jaad.spi.javasound.AACAudioFileReader().getAudioInputStream(currLocation.getFile());
+						} else {
+							ain = AudioSystem.getAudioInputStream(currLocation.getInputStream()); 
+						}
 					} catch(Exception e) {
 						log.error("Unable to create input stream for location " + currLocation, e);
 						setChanged();

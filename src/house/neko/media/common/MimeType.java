@@ -9,6 +9,8 @@ public class MimeType implements java.io.Serializable
 	private static MimeType _TYPE_FLAC = null;
 	public final static String TYPE_MP3 = "MPEG-1 Layer 3";
 	private static MimeType _TYPE_MP3 = null;
+	public final static String TYPE_AAC = "AAC";
+	private static MimeType _TYPE_AAC = null;
 
 	private String fileExtension;
 	private String mimeType;
@@ -86,6 +88,18 @@ public class MimeType implements java.io.Serializable
 					_TYPE_MP3.setFileExtension("mp3");
 					_TYPE_MP3.setMimeType("audio");
 					_TYPE_MP3.setMimeSubType("mpeg");
+				}
+			}
+			return _TYPE_MP3;
+		} else if(type.startsWith(TYPE_AAC)) {
+			if(_TYPE_MP3 == null)
+			{
+				synchronized(TYPE_AAC)
+				{
+					_TYPE_MP3 = new MimeType();
+					_TYPE_MP3.setFileExtension("m4a");
+					_TYPE_MP3.setMimeType("audio");
+					_TYPE_MP3.setMimeSubType("x-m4a");
 				}
 			}
 			return _TYPE_MP3;

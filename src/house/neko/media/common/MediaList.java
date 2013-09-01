@@ -19,6 +19,8 @@ public class MediaList implements java.io.Serializable
 	private String artistAlias;
 	private Long publish_date;     // seconds from epoc
 	
+	private MediaListEntry[] tracks;
+	
 	private boolean isUserDirty;
 	private boolean isContentDirty;
 	private boolean isBaseDirty;
@@ -36,6 +38,7 @@ public class MediaList implements java.io.Serializable
 		isUserDirty = false;
 		isContentDirty = false;
 		isBaseDirty = false;
+		tracks = null;
 	}
 	
 	/**
@@ -53,7 +56,14 @@ public class MediaList implements java.io.Serializable
 		makeBaseDirty(id, i);
 		id = i;
 	}
-
+	
+	public Long getLocalID()
+	{	return local_id; }
+	public void setLocalID(Long local_id)
+	{
+		makeBaseDirty(this.local_id, local_id);
+		this.local_id = local_id;
+	}
 	
 	/**
 	 * 
@@ -106,6 +116,40 @@ public class MediaList implements java.io.Serializable
 		makeBaseDirty(publish_date, ms);
 		publish_date = ms; 
 	}
+	
+	public void setTrackList(MediaListEntry[] t)
+	{	this.tracks = t; }
+	
+	
+	public Media getBySequence(int seq)
+	{
+		if(tracks == null)
+		{	return null; }
+		if(seq > tracks.length)
+		{	// search backwards
+			for(int i = tracks.length-1; i > 0; i--)
+			{
+				if(tracks[i].position == seq)
+				{	return tracks[i].media; }
+			}
+			return null;
+		} else {
+			if(tracks[seq].position == seq)
+			{	return tracks[seq].media; }
+			for(int i = seq; i < tracks.length; i++)
+			{
+				if(tracks[i].position == seq)
+				{	return tracks[i].media; }
+			}
+			for(int i = 0; i < seq; i++)
+			{
+				if(tracks[i].position == seq)
+				{	return tracks[i].media; }
+			}
+		}
+		return null;
+	}
+	
 	
 	private void makeBaseDirty(Object _old, Object _new)
 	{
