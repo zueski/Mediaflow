@@ -336,6 +336,7 @@ public class DatabaseDataStore implements DataStore
 						if(log.isTraceEnabled())
 						{	log.trace("MediaListLoad - adding " + currList.getName() + " (" + currList.getLocalID() + ")"); }
 						currList.setTrackList(tracks.toArray(new MediaListEntry[tracks.size()]));
+						currList.resetDirty();
 						mlist.add(currList);
 						tracks = new Vector<MediaListEntry>(30);
 					}

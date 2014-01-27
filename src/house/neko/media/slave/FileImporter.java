@@ -82,6 +82,7 @@ public class FileImporter implements ActionListener
 	
 	private Media[] getMetaDataForFiles(File[] selected)
 	{
+		java.util.Arrays.sort(selected);
 		JPanel p = new JPanel();
 		MediaMetaDataReader metaReader = new MediaMetaDataReader();
 		Media[] m = new Media[selected.length];
@@ -97,10 +98,14 @@ public class FileImporter implements ActionListener
 		JTextField[] title = new JTextField[selected.length];
 		JTextField[] artist = new JTextField[selected.length];
 		JTextField[] album = new JTextField[selected.length];
+		JTextField[] track = new JTextField[selected.length];
+		addLabel(p, new JLabel("Album"), gridbag, gc, 2, y);
+		addLabel(p, new JLabel("Artist"), gridbag, gc, 4, y);
+		addLabel(p, new JLabel("Title"), gridbag, gc, 6, y);
+		addLabel(p, new JLabel("Track"), gridbag, gc, 8, y++);
 		READLOOP:for(int k = 0; k < selected.length; k++)
 		{
 			log.info("Checking " + selected[k]);
-			addLabel(p, new JLabel("File " + (k+1) + ": " + selected[k].getAbsolutePath()), gridbag, gc, 0, y++);
 			try
 			{
 				m[k] = metaReader.getMediaFromFile(selected[k]);
@@ -108,24 +113,29 @@ public class FileImporter implements ActionListener
 				log.error(ioe);
 				continue READLOOP;
 			}
+			checked[k] = new JCheckBox("Import", true);
+			title[k] = new JTextField(20);
+			artist[k] = new JTextField(20);
+			album[k] = new JTextField(20);
+			track[k] = new JTextField(3);
+			title[k].setText(m[k].getName());
+			artist[k].setText(m[k].getArtist());
+			album[k].setText(m[k].getAlbum());
+			track[k].setText("" + m[k].getTrackNumber());
 			
-			addLabel(p, new JLabel("Album"), gridbag, gc, 2, y);
-			addLabel(p, new JLabel("Artist"), gridbag, gc, 4, y);
-			addLabel(p, new JLabel("Title"), gridbag, gc, 6, y);
-			//for(int i = 0; i < m.length; i++)
-			{
-				checked[k] = new JCheckBox("Import", true);
-				title[k] = new JTextField(20);
-				artist[k] = new JTextField(20);
-				album[k] = new JTextField(20);
-				title[k].setText(m[k].getName());
-				artist[k].setText(m[k].getArtist());
-				album[k].setText(m[k].getAlbum());
-				addField(p, checked[k], gridbag, gc, 0, y);
-				addField(p, album[k], gridbag, gc, 2, y);
-				addField(p, artist[k], gridbag, gc, 4, y);
-				addField(p, title[k], gridbag, gc, 6, y);
-			}
+			gc.gridx = 0;
+			gc.gridy = ++y;
+			gc.gridheight = 1;
+			gc.gridwidth = GridBagConstraints.REMAINDER;
+			JLabel filelabel = new JLabel("File " + (k+1) + ": " + selected[k].getAbsolutePath());
+			gridbag.setConstraints(filelabel, gc);
+			p.add(filelabel);
+			gc.gridwidth = 1;
+			addField(p, checked[k], gridbag, gc, 0, ++y);
+			addField(p, album[k], gridbag, gc, 2, y);
+			addField(p, artist[k], gridbag, gc, 4, y);
+			addField(p, title[k], gridbag, gc, 6, y);
+			addField(p, track[k], gridbag, gc, 8, y);
 		}
 		if(JOptionPane.showConfirmDialog(null, p, "Pick Disc", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
 		{

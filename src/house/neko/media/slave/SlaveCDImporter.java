@@ -2,6 +2,8 @@ package house.neko.media.slave;
 
 import house.neko.media.common.Media;
 import house.neko.media.common.MediaLocation;
+import house.neko.media.common.MediaList;
+import house.neko.media.common.MediaListEntry;
 import house.neko.media.common.MimeType;
 import house.neko.media.common.MediaLibrary;
 import house.neko.media.common.ConfigurationManager;
@@ -34,6 +36,16 @@ public class SlaveCDImporter
 	private HierarchicalConfiguration config;
 	private MimeType flacMimeType;
 	
+	private Vector<JTextField> discTitles = new Vector<JTextField>();
+	private Vector<JTextField> discArtists = new Vector<JTextField>();
+	private Vector<JTextField> discYears = new Vector<JTextField>();
+	private Vector<String> discIDs = new Vector<String>();
+	
+	private Vector<Vector<JLabel>> trackNumbers = new Vector<Vector<JLabel>>();
+	private Vector<Vector<JTextField>> trackTitles = new Vector<Vector<JTextField>>();
+	private Vector<Vector<JTextField>> trackArtists = new Vector<Vector<JTextField>>();
+	
+	
 	public SlaveCDImporter(MediaLibrary library)
 	{
 		this.library = library;
@@ -52,24 +64,24 @@ public class SlaveCDImporter
 			java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(cddbExec.getInputStream()));
 			READLOOP:
 			{
-				String year = "";
+				String discYear = "";
 				String discArtist = "";
 				String discTitle = "";
+				String discID = "";
 				String trackCount = "";
 				String trackNumber = "";
 				String trackLength = "";
 				String frameOffset = "";
 				String trackArtist = "";
 				String trackTitle = "";
-				Vector<Vector<Media>> discs = new Vector<Vector<Media>>();
 				String line = r.readLine();
 				while(line != null)
 				{
 					line = line.trim();
 					if(line.startsWith("Year:"))
 					{
-						year = line.substring(6);
-						if(log.isTraceEnabled()) { log.trace("CD year: " + year); }
+						discYear = line.substring(6);
+						if(log.isTraceEnabled()) { log.trace("CD year: " + discYear); }
 					} else if(line.startsWith("Artist:")) {
 						discArtist = line.substring(8).replaceAll("^'(.*)'$", "$1");
 						if(log.isTraceEnabled()) { log.trace("Artist: " + discArtist); }
@@ -77,8 +89,21 @@ public class SlaveCDImporter
 						discTitle = line.substring(7).replaceAll("^'(.*)'$", "$1");
 						if(log.isTraceEnabled()) { log.trace("Disc title: " + discTitle); }
 					} else if(line.startsWith("Number of tracks:")) {
-						discs.add(new Vector<Media>());
+						if(discTitles.size() > 0)
+						{	// update last disc
+							trackNumbers.lastElement().add(new JLabel(trackNumber));
+							trackTitles.lastElement().add(new JTextField(trackTitle));
+							trackArtists.lastElement().add(new JTextField(trackArtist));
+						}
+						// start of new disc
 						trackCount = line.substring(18).replaceAll("^'(.*)'$", "$1");
+						discTitles.add(new JTextField(discTitle));
+						discArtists.add(new JTextField(discArtist));
+						discYears.add(new JTextField(discYear));
+						discIDs.add(discID);
+						trackNumbers.add(new Vector<JLabel>());
+						trackTitles.add(new Vector<JTextField>());
+						trackArtists.add(new Vector<JTextField>());
 						if(log.isTraceEnabled()) { log.trace("Track count: " + trackCount); }
 					} else if(line.startsWith("number:")) {
 						trackNumber = line.substring(8);
@@ -87,51 +112,39 @@ public class SlaveCDImporter
 						frameOffset = line.substring(14);
 						if(log.isTraceEnabled()) { log.trace("Frame offset: " + frameOffset); }
 					} else if(line.startsWith("length:")) {
-						trackLength= line.substring(8).replaceAll("^(.*) seconds$", "$1");
+						trackLength = line.substring(8).replaceAll("^(.*) seconds$", "$1");
 						if(log.isTraceEnabled()) { log.trace("length: " + trackLength); }
 					} else if(line.startsWith("artist:")) {
-						trackArtist= line.substring(8).replaceAll("^'(.*)'$", "$1");
+						trackArtist = line.substring(8).replaceAll("^'(.*)'$", "$1");
 						if(log.isTraceEnabled()) { log.trace("Track artist: " + trackArtist); }
 					} else if(line.startsWith("title:")) {
 						trackTitle = line.substring(7).replaceAll("^'(.*)'$", "$1");
 						if(log.isTraceEnabled()) { log.trace("Track title: " + trackTitle); }
-					} else if(line.startsWith("Track ") && trackTitle.length() > 0) {
-						// start next track
-						Media m = new Media();
-						m.setArtist(trackArtist);
-						m.setName(trackTitle);
-						m.setAlbum(discTitle);
-						try { m.setTrackNumber(Integer.parseInt(trackNumber)); } catch(NumberFormatException nfe) { }
-						discs.lastElement().add(m);
+					} else if(line.matches("^Track +\\d+$") && trackTitle.length() > 0) {
+						// found next, add current track 
+						trackNumbers.lastElement().add(new JLabel(trackNumber));
+						trackTitles.lastElement().add(new JTextField(trackTitle));
+						trackArtists.lastElement().add(new JTextField(trackArtist));
+					} else if(line.startsWith("Disc ID: ") && trackTitle.length() > 0) {
+						discID = line.substring(9);
 					}
 					line = r.readLine();
 				}
 				if(trackTitle.length() > 0)
 				{
-					Media m = new Media();
-					m.setArtist(trackArtist);
-					m.setName(trackTitle);
-					m.setAlbum(discTitle);
-					try { m.setTrackNumber(Integer.parseInt(trackNumber)); } catch(NumberFormatException nfe) { }
-					discs.lastElement().add(m);
+					trackNumbers.lastElement().add(new JLabel(trackNumber));
+					trackTitles.lastElement().add(new JTextField(trackTitle));
+					trackArtists.lastElement().add(new JTextField(trackArtist));
 				}
-				if(log.isInfoEnabled()) { log.info("Found " + discs.size() + " possible matches"); }
-				if(discs.size() > 0)
-				{	// pick input
-					pickDisc(discs);
-				}
-				if(discs.size() < 1)
+				if(log.isInfoEnabled()) { log.info("Found " + discTitles.size() + " possible matches"); }
+				MediaList ml = pickDisc();
+				if(ml != null)
 				{
-					// open input to type
-					getInput(discs);
-				}
-				while(discs.size() > 1)
-				{	discs.remove(discs.size()-1); }
-				if(discs.size() == 1 )
-				{	// auto load!
-					if(log.isInfoEnabled()) { log.info("auto-importing disc with " + discs.lastElement().size() + " tracks"); }
-					for(Media m : discs.lastElement().toArray(new Media[discs.lastElement().size()]))
+					if(log.isInfoEnabled()) { log.info("importing disc with " + ml.getTrackCount() + " tracks"); }
+					MediaListEntry[] mlislt = ml.getTrackList();
+					for(MediaListEntry mt : mlislt)
 					{
+						Media m = mt.media;
 						if(log.isInfoEnabled()) { log.info("importing track " + m.getTrackNumber() + ": " + m); }
 						MediaLocation l = new MediaLocation();
 						l.setMimeType(flacMimeType);
@@ -185,6 +198,8 @@ public class SlaveCDImporter
 						}
 						tmpFile.delete();
 					}
+					// add list
+					library.add(ml);
 				}
 			}
 			if(cddbExec.waitFor() != 0)
@@ -197,14 +212,14 @@ public class SlaveCDImporter
 		{	log.debug("Done with CD import"); }
 	}
 	
-	private void pickDisc(Vector<Vector<Media>> discs)
+	private MediaList pickDisc()
 	{
+		MediaList ml = null;
 		try
 		{
 			JTabbedPane tp = new JTabbedPane();
-			for(int k = 0; k < discs.size(); k++)
+			for(int k = 0; k < discTitles.size(); k++)
 			{
-				Vector<Media> md = discs.elementAt(k);
 				JPanel p = new JPanel();
 				GridBagLayout gridbag = new GridBagLayout();
 				GridBagConstraints gc = new GridBagConstraints();
@@ -214,117 +229,52 @@ public class SlaveCDImporter
 				gc.anchor = GridBagConstraints.NORTHWEST;
 				gc.ipadx = 7;
 				int y = 0;
-				JTextField[] title = new JTextField[md.size()];
-				JTextField[] artist = new JTextField[md.size()];
-				JTextField[] album = new JTextField[md.size()];
-				addLabel(p, new JLabel("Album"), gridbag, gc, 2, y);
-				addLabel(p, new JLabel("Artist"), gridbag, gc, 4, y);
-				addLabel(p, new JLabel("Title"), gridbag, gc, 6, y);
-				for(int i = 0; i < md.size(); i++)
+				addLabel(p, new JLabel("Album Name"), gridbag, gc, 0, y);
+				addField(p, discTitles.elementAt(k), gridbag, gc, 4, y);
+				addLabel(p, new JLabel("Album Artist"), gridbag, gc, 0, ++y);
+				addField(p, discArtists.elementAt(k), gridbag, gc, 4, y);
+				addLabel(p, new JLabel("Year Released"), gridbag, gc, 0, ++y);
+				addField(p, discYears.elementAt(k), gridbag, gc, 2, y);
+				addLabel(p, new JLabel("#"), gridbag, gc, 0, ++y);
+				addLabel(p, new JLabel("Artist"), gridbag, gc, 2, y);
+				addLabel(p, new JLabel("Title"), gridbag, gc, 4, y);
+				for(int i = 0; i < trackNumbers.elementAt(k).size(); i++)
 				{
-					title[i] = new JTextField(20);
-					artist[i] = new JTextField(20);
-					album[i] = new JTextField(20);
-					title[i].setText(md.elementAt(i).getName());
-					artist[i].setText(md.elementAt(i).getArtist());
-					album[i].setText(md.elementAt(i).getAlbum());
-					addLabel(p, new JLabel("Track " + (i+1)), gridbag, gc, 0, ++y);
-					addField(p, album[i], gridbag, gc, 2, y);
-					addField(p, artist[i], gridbag, gc, 4, y);
-					addField(p, title[i], gridbag, gc, 6, y);
+					addLabel(p, trackNumbers.elementAt(k).elementAt(i), gridbag, gc, 0, ++y);
+					addField(p, trackArtists.elementAt(k).elementAt(i), gridbag, gc, 2, y);
+					addField(p, trackTitles.elementAt(k).elementAt(i), gridbag, gc, 4, y);
 				}
-				tp.addTab(md.elementAt(0).getArtist() + " - " + md.elementAt(0).getAlbum(), p);
+				tp.addTab(discArtists.elementAt(k).getText() + " - " + discTitles.elementAt(k).getText(), p);
 			}
 			if(JOptionPane.showConfirmDialog(null, tp, "Pick Disc", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
 			{	// pop all off except choice
-				log.info("Picked disc #" + tp.getSelectedIndex());
-				for(int selectedIndex = tp.getSelectedIndex(); selectedIndex > 0; selectedIndex--)
-				{	discs.remove(0); }
-				while(discs.size() > 1)
-				{	discs.remove(1); }
+				int j = tp.getSelectedIndex();
+				log.info("Picked disc #" + j);
+				ml = new MediaList();
+				ml.setID(discIDs.elementAt(j));
+				ml.setName(discTitles.elementAt(j).getText());
+				ml.setArtist(discArtists.elementAt(j).getText());
+				//try { ml.setPublishedDate(new Integer.parseInt(discYears.elementAt(j).trim())); } catch(Exception e) { }
+				MediaListEntry[] tracks = new MediaListEntry[trackNumbers.elementAt(j).size()];
+				for(int i = 0; i < tracks.length; i++)
+				{
+					Media m = new Media();
+					m.setName(trackTitles.elementAt(j).elementAt(i).getText());
+					m.setArtist(trackArtists.elementAt(j).elementAt(i).getText());
+					m.setAlbum(discTitles.elementAt(j).getText());
+					try { m.setTrackNumber(Integer.parseInt(trackNumbers.elementAt(j).elementAt(i).getText())); } catch(NumberFormatException nfe) { }
+					//m.getPublishedDateMS(ml.getPublishedDate());
+					tracks[i] = new MediaListEntry(m, i+1);
+				}
+				ml.setTrackList(tracks);
 			} else {
 				// pop all off
-				log.info("Canceled picking, clearing list");
-				discs.clear();
+				log.info("Canceled picking");
 			}
 		} catch(Exception e) {
 			log.error("unable to pick titles for CD import", e);
 		}
-	}
-	
-	private void getInput(Vector<Vector<Media>> discs)
-	{
-		try
-		{
-			String[] cmdEncode = { "cdparanoia", "-Q" };
-			Process execQueryCD = Runtime.getRuntime().exec(cmdEncode);
-			java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(execQueryCD.getErrorStream()));
-			int count = 0;
-			READLOOP:
-			{
-				Pattern p = Pattern.compile("^\\s*(\\d+)\\..*$");
-				String line = r.readLine();
-				while(line != null)
-				{
-					log.debug("!"+ line + "!");
-					Matcher m = p.matcher(line);
-					if(m.matches())
-					{	count = Integer.parseInt(m.group(1)); }
-					line = r.readLine();
-				}
-				if(log.isDebugEnabled())
-				{	log.debug("Found " + count + " tracks"); }
-				if(execQueryCD.waitFor() != 0)
-				{	log.error("Unable to query CD"); }
-			}
-			if(count == 0)
-			{	return; }
-			// ask for input now
-			{
-				JPanel p = new JPanel();
-				GridBagLayout gridbag = new GridBagLayout();
-				GridBagConstraints gc = new GridBagConstraints();
-				gc.weightx = 100;
-				gc.weighty = 100;
-				p.setLayout(gridbag);
-				gc.anchor = GridBagConstraints.NORTHWEST;
-				gc.ipadx = 7;
-				int y = 0;
-				JTextField[] title = new JTextField[count];
-				JTextField[] artist = new JTextField[count];
-				JTextField[] album = new JTextField[count];
-				addLabel(p, new JLabel("Album"), gridbag, gc, 2, y);
-				addLabel(p, new JLabel("Artist"), gridbag, gc, 4, y);
-				addLabel(p, new JLabel("Title"), gridbag, gc, 6, y);
-				for(int i = 0; i < count; i++)
-				{
-					title[i] = new JTextField(20);
-					artist[i] = new JTextField(20);
-					album[i] = new JTextField(20);
-					addLabel(p, new JLabel("Track " + (i+1)), gridbag, gc, 0, ++y);
-					addField(p, album[i], gridbag, gc, 2, y);
-					addField(p, artist[i], gridbag, gc, 4, y);
-					addField(p, title[i], gridbag, gc, 6, y);
-				}
-				discs.add(new Vector<Media>());
-				if(JOptionPane.showConfirmDialog(null, p, "Input CD", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
-				{
-					for(int i = 0; i < count; i++)
-					{
-						Media m = new Media();
-						m.setArtist(artist[i].getText());
-						m.setName(title[i].getText());
-						m.setAlbum(album[i].getText());
-						m.setTrackNumber(i+1);
-						discs.lastElement().add(m);
-					}
-				} else {
-					discs.clear();
-				}
-			}
-		} catch(Exception e) {
-			log.error("unable to get input for CD import", e);
-		}
+		return ml;
 	}
 	
 	private void addComponent(Container p, Component c, GridBagLayout gridbag, GridBagConstraints gc, int x, int y)

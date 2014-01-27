@@ -119,7 +119,14 @@ public class MediaList implements java.io.Serializable
 	
 	public void setTrackList(MediaListEntry[] t)
 	{	this.tracks = t; }
-	
+	public MediaListEntry[] getTrackList()
+	{
+		if(this.tracks == null)
+		{	return null; }
+		return this.tracks.clone();
+	}
+	public int getTrackCount()
+	{	return (this.tracks == null) ? 0 : this.tracks.length; }
 	
 	public Media getBySequence(int seq)
 	{
